@@ -8,50 +8,61 @@ public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager Instance;
 
-    [Header("Referências UI")]
+    [Header("Referências de UI - Painel")]
     [SerializeField] private GameObject dialogueBox; 
-    [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI dialogueText;
+    [SerializeField] private GameObject nextTextIndicator;
+
+    [Header("Referências de UI - Retratos (Portraits)")]
     [SerializeField] private Image portraitLeft;   
     [SerializeField] private Image portraitRight;  
-    [SerializeField] private GameObject nextTextIndicator; // Arraste seu "Indicador_Avancar" aqui
 
-    [Header("Configurações")]
-    [SerializeField] private float typingSpeed = 0.04f; 
-    [SerializeField] private float blinkSpeed = 0.5f; // Velocidade do pisca-pisca
+    [Header("Referências de UI - Caixas de Nome")]
+    [SerializeField] private GameObject groupNameLeft;
+    [SerializeField] private TextMeshProUGUI textNameLeft;
+    [SerializeField] private GameObject groupNameRight;
+    [SerializeField] private TextMeshProUGUI textNameRight;
 
-    private string[] currentCharacterNames;
-    private string[] currentDialogueLines;
+    [Header("Configurações de Texto")]
+    [SerializeField] private float typingSpeed = 0.03f; 
+    [SerializeField] private float blinkSpeed = 0.5f;
+
+    // Armazenamento dos dados ativos do diálogo
+    private DialogueData currentDialogueData;
     private int currentLine = 0;
     private bool isTyping = false; 
-    private Coroutine blinkCoroutine; // Guarda a animação de piscar
+    private Coroutine blinkCoroutine;
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+        // Sistema de instância única (Singleton) para o DontDestroyOnLoad funcionar entre as cenas
+        if (Instance == null) 
+        { 
+            Instance = this; 
+            DontDestroyOnLoad(gameObject); 
         }
-        else
-        {
-            Destroy(gameObject);
+        else 
+        { 
+            Destroy(gameObject); 
         }
     }
 
     private void Start()
     {
-        if (dialogueBox != null)
-            dialogueBox.SetActive(false);
-
-        if (nextTextIndicator != null)
-            nextTextIndicator.SetActive(false);
+        // Garante que a UI comece limpa e escondida
+        if (dialogueBox != null) dialogueBox.SetActive(false);
+        if (nextTextIndicator != null) nextTextIndicator.SetActive(false);
+        
+        // Esconde os retratos inicialmente
+        if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
+        if (portraitRight != null) portraitRight.gameObject.SetActive(false);
     }
 
     private void Update()
     {
         if (!dialogueBox.activeSelf) return;
 
+        // Suporte para Barra de Espaço (New Input System) e Clique Esquerdo do Mouse
         bool spacePressed = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
         bool mousePressed = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
 
@@ -59,41 +70,80 @@ public class DialogueManager : MonoBehaviour
         {
             if (isTyping)
             {
-                // Botão de Skip: Mostra a frase inteira imediatamente
+                // Se o jogador clicar enquanto o texto está digitando, pula direto para o final da frase
                 StopAllCoroutines();
-                dialogueText.text = currentDialogueLines[currentLine];
+                dialogueText.text = currentDialogueData.dialogueLines[currentLine].sentence;
                 isTyping = false;
-                
-                // Ativa o indicador piscante, já que o texto terminou
                 StartBlinking();
             }
-            else
-            {
-                NextLine();
+            else 
+            { 
+                NextLine(); 
             }
         }
     }
 
-    public void StartDialogue(string[] names, string[] lines)
+    // O gatilho agora chama esta função passando o ScriptableObject diretamente
+    public void StartDialogue(DialogueData data)
     {
-        currentCharacterNames = names;
-        currentDialogueLines = lines;
+        currentDialogueData = data;
         currentLine = 0;
-
         dialogueBox.SetActive(true);
         ShowLine();
     }
 
     private void ShowLine()
     {
-        if (currentLine < currentDialogueLines.Length)
+        if (currentDialogueData == null || currentLine >= currentDialogueData.dialogueLines.Length)
         {
-            nameText.text = currentCharacterNames[currentLine];
-            
-            // Garante que o indicador suma enquanto uma nova frase está sendo digitada
-            StopBlinking();
-            
-            StartCoroutine(TypeSentence(currentDialogueLines[currentLine]));
+            EndDialogue();
+            return;
+        }
+
+        // Resgata os dados da linha atual do ScriptableObject
+        DialogueData.DialogueLine lineInfo = currentDialogueData.dialogueLines[currentLine];
+        string speaker = lineInfo.speakerName;
+
+        // 1. LÓGICA DE POSIÇÃO DO NOME E DO RETRATO
+        if (speaker.ToLower() == "noah")
+        {
+            // Ativa o lado esquerdo (Protagonista)
+            groupNameLeft.SetActive(true);
+            groupNameRight.SetActive(false);
+            textNameLeft.text = speaker;
+
+            // Atualiza o Retrato da Esquerda
+            UpdatePortrait(portraitLeft, lineInfo.characterPortrait);
+        }
+        else
+        {
+            // Ativa o lado direito (Emily / Outros personagens)
+            groupNameLeft.SetActive(false);
+            groupNameRight.SetActive(true);
+            textNameRight.text = speaker;
+
+            // Atualiza o Retrato da Direita
+            UpdatePortrait(portraitRight, lineInfo.characterPortrait);
+        }
+        
+        // 2. DIGITAÇÃO DO TEXTO
+        StopBlinking();
+        StartCoroutine(TypeSentence(lineInfo.sentence));
+    }
+
+    private void UpdatePortrait(Image portraitImage, Sprite characterSprite)
+    {
+        if (portraitImage == null) return;
+
+        if (characterSprite != null)
+        {
+            portraitImage.gameObject.SetActive(true);
+            portraitImage.sprite = characterSprite;
+        }
+        else
+        {
+            // Se não colocarmos nenhuma foto no arquivo, o retrato daquele lado some
+            portraitImage.gameObject.SetActive(false);
         }
     }
 
@@ -101,20 +151,16 @@ public class DialogueManager : MonoBehaviour
     {
         isTyping = true;
         dialogueText.text = ""; 
-
         foreach (char letter in sentence.ToCharArray())
         {
             dialogueText.text += letter;
             yield return new WaitForSeconds(typingSpeed);
         }
-
         isTyping = false;
-        
-        // Texto terminou de aparecer naturalmente: começa a piscar o indicador
         StartBlinking();
     }
 
-    // Liga o indicador e inicia o loop do pisca-pisca
+    // Gerenciamento do Indicador de Avanço Piscante
     private void StartBlinking()
     {
         if (nextTextIndicator != null)
@@ -124,27 +170,25 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
-    // Desliga o indicador e para a animação para não dar conflito
     private void StopBlinking()
     {
-        if (blinkCoroutine != null)
-        {
-            StopCoroutine(blinkCoroutine);
-            blinkCoroutine = null;
-        }
-
-        if (nextTextIndicator != null)
-        {
-            nextTextIndicator.SetActive(false);
-        }
+        if (blinkCoroutine != null) StopCoroutine(blinkCoroutine);
+        if (nextTextIndicator != null) nextTextIndicator.SetActive(false);
     }
 
-    // Loop que liga e desliga o objeto baseado no blinkSpeed
     private IEnumerator BlinkIndicator()
     {
         while (true)
         {
-            nextTextIndicator.SetActive(!nextTextIndicator.activeSelf);
+            CanvasGroup group = nextTextIndicator.GetComponent<CanvasGroup>();
+            if (group != null)
+            {
+                group.alpha = group.alpha == 1f ? 0f : 1f;
+            }
+            else
+            {
+                nextTextIndicator.SetActive(!nextTextIndicator.activeSelf);
+            }
             yield return new WaitForSeconds(blinkSpeed);
         }
     }
@@ -152,21 +196,21 @@ public class DialogueManager : MonoBehaviour
     public void NextLine()
     {
         currentLine++;
-
-        if (currentLine < currentDialogueLines.Length)
-        {
-            ShowLine();
+        if (currentLine < currentDialogueData.dialogueLines.Length) 
+        { 
+            ShowLine(); 
         }
-        else
-        {
-            EndDialogue();
+        else 
+        { 
+            EndDialogue(); 
         }
     }
 
     private void EndDialogue()
     {
         StopBlinking();
-        if (dialogueBox != null)
-            dialogueBox.SetActive(false);
+        if (dialogueBox != null) dialogueBox.SetActive(false);
+        if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
+        if (portraitRight != null) portraitRight.gameObject.SetActive(false);
     }
 }
