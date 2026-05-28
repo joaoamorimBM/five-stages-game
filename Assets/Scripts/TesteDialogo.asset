@@ -13,12 +13,11 @@ MonoBehaviour:
   m_Name: TesteDialogo
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   dialogueLines:
-  - speakerName: Noah
-    sentence: "Respira\xE7\xE3o pesada..."
-    characterPortrait: {fileID: 0}
-  - speakerName: Noah
-    sentence: "Ei, amig\xE3o... o que voc\xEA est\xE1 fazendo aqui no frio?"
-    characterPortrait: {fileID: 0}
-  - speakerName: Noah
-    sentence: "Voc\xEA est\xE1 bem longe da sua fam\xEDlia, n\xE9?"
-    characterPortrait: {fileID: 0}
+  - speaker: 0
+    sentence: "Este \xE9 o teste para o meu retrato no lado esquerdo"
+  - speaker: 3
+    sentence: E eu sou a atendente, aparecendo no lado direito pra te ajudar
+  - speaker: 1
+    sentence: "Noah, voc\xEA consegue me ver aqui tamb\xE9m?"
+  - speaker: 0
+    sentence: "Perfeito. O sistema est\xE1 alternando entre todos n\xF3s perfeitamente"

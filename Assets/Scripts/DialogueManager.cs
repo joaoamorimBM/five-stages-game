@@ -8,6 +8,9 @@ public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager Instance;
 
+    [Header("Configuração Global")]
+    [SerializeField] private CharacterDatabase characterDatabase;
+
     [Header("Referências de UI - Painel")]
     [SerializeField] private GameObject dialogueBox; 
     [SerializeField] private TextMeshProUGUI dialogueText;
@@ -93,43 +96,62 @@ public class DialogueManager : MonoBehaviour
     }
 
     private void ShowLine()
+{
+    if (currentDialogueData == null || currentLine >= currentDialogueData.dialogueLines.Length)
     {
-        if (currentDialogueData == null || currentLine >= currentDialogueData.dialogueLines.Length)
-        {
-            EndDialogue();
-            return;
-        }
-
-        // Resgata os dados da linha atual do ScriptableObject
-        DialogueData.DialogueLine lineInfo = currentDialogueData.dialogueLines[currentLine];
-        string speaker = lineInfo.speakerName;
-
-        // 1. LÓGICA DE POSIÇÃO DO NOME E DO RETRATO
-        if (speaker.ToLower() == "noah")
-        {
-            // Ativa o lado esquerdo (Protagonista)
-            groupNameLeft.SetActive(true);
-            groupNameRight.SetActive(false);
-            textNameLeft.text = speaker;
-
-            // Atualiza o Retrato da Esquerda
-            UpdatePortrait(portraitLeft, lineInfo.characterPortrait);
-        }
-        else
-        {
-            // Ativa o lado direito (Emily / Outros personagens)
-            groupNameLeft.SetActive(false);
-            groupNameRight.SetActive(true);
-            textNameRight.text = speaker;
-
-            // Atualiza o Retrato da Direita
-            UpdatePortrait(portraitRight, lineInfo.characterPortrait);
-        }
-        
-        // 2. DIGITAÇÃO DO TEXTO
-        StopBlinking();
-        StartCoroutine(TypeSentence(lineInfo.sentence));
+        EndDialogue();
+        return;
     }
+
+    // Pega a linha atual
+    DialogueData.DialogueLine lineInfo = currentDialogueData.dialogueLines[currentLine];
+    
+    // Busca o perfil completo do personagem no Banco de Dados automaticamente
+    CharacterDatabase.CharacterProfile profile = characterDatabase.GetProfile(lineInfo.speaker);
+    string speakerName = profile.displayName;
+    Sprite speakerPortrait = profile.defaultPortrait;
+
+    // CONFIGURAÇÃO DE CORES PARA FOCO/DESFOCO
+    // Altere esses valores se quiser mais ou menos escuridão (0.3f é bem focado, 1.0f é totalmente aceso)
+    Color corFoco = Color.white; 
+    Color corSemFoco = new Color(0.35f, 0.35f, 0.35f, 1f); // Deixa o personagem cinza escuro
+
+    // LÓGICA DE POSIÇÃO, NOME E FOCO DO PERSONAGEM
+    if (lineInfo.speaker == CharacterDatabase.CharacterType.Noah)
+    {
+        // Ativa e destaca o lado esquerdo (Protagonista)
+        groupNameLeft.SetActive(true);
+        groupNameRight.SetActive(false);
+        textNameLeft.text = speakerName;
+
+        // Atualiza o Retrato da Esquerda e dá FOCO
+        UpdatePortrait(portraitLeft, speakerPortrait);
+        if (portraitLeft != null) portraitLeft.color = corFoco;
+
+        // Tira o foco do Retrato da Direita (se houver alguma imagem lá)
+        if (portraitRight != null && portraitRight.sprite != null) 
+            portraitRight.color = corSemFoco;
+    }
+    else
+    {
+        // Ativa e destaca o lado direito ( Emily / Atendente )
+        groupNameLeft.SetActive(false);
+        groupNameRight.SetActive(true);
+        textNameRight.text = speakerName;
+
+        // Atualiza o Retrato da Direita e dá FOCO
+        UpdatePortrait(portraitRight, speakerPortrait);
+        if (portraitRight != null) portraitRight.color = corFoco;
+
+        // Tira o foco do Retrato da Esquerda
+        if (portraitLeft != null && portraitLeft.sprite != null) 
+            portraitLeft.color = corSemFoco;
+    }
+    
+    // Digitação do Texto
+    StopBlinking();
+    StartCoroutine(TypeSentence(lineInfo.sentence));
+}
 
     private void UpdatePortrait(Image portraitImage, Sprite characterSprite)
     {
