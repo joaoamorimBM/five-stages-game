@@ -9,21 +9,36 @@ public class PlayerMovement : MonoBehaviour
     [Header("Mouse")]
     public float mouseSensitivity = 2f;
 
-    [Header("Referências — arraste no Inspector")]
-    public Camera cam;
+    [Header("Referências")]
+    public Camera  cam;
     public Animator anim;
 
+    [Header("Passos")]
+    public AudioClip stepSound;
+    public float stepInterval     = 0.45f;  // tempo entre passos andando
+    public float stepIntervalRun  = 0.25f;  // tempo entre passos correndo
+
     CharacterController cc;
+    AudioSource audioSource;
+    float stepTimer = 0f;
     float rotX;
 
     void Start()
     {
-        cc = GetComponent<CharacterController>();
+        cc          = GetComponent<CharacterController>();
+        audioSource = GetComponent<AudioSource>();
+
+        // Cria AudioSource automaticamente se não tiver
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.spatialBlend = 0f;  // som 2D (passos do próprio jogador)
+        audioSource.playOnAwake  = false;
+
         Cursor.lockState = CursorLockMode.Locked;
 
-        // Proteção: avisa no Console se esqueceu de arrastar
-        if (cam  == null) Debug.LogError("Cam não atribuída no PlayerMovement!");
-        if (anim == null) Debug.LogError("Anim não atribuído no PlayerMovement!");
+        if (cam  == null) Debug.LogError("Cam não atribuída!");
+        if (anim == null) Debug.LogError("Anim não atribuído!");
     }
 
     void Update()
@@ -48,6 +63,30 @@ public class PlayerMovement : MonoBehaviour
 
         if (anim != null)
             anim.SetFloat("speed", currentSpeed, 0.1f, Time.deltaTime);
+
+        // Sistema de passos
+        bool isMoving = currentSpeed > 0f && cc.isGrounded;
+        if (isMoving)
+        {
+            float interval = isRunning ? stepIntervalRun : stepInterval;
+            stepTimer += Time.deltaTime;
+
+            if (stepTimer >= interval)
+            {
+                PlayStep();
+                stepTimer = 0f;
+            }
+        }
+        else
+        {
+            stepTimer = 0f;  // reseta quando para
+        }
+    }
+
+    void PlayStep()
+    {
+        if (stepSound != null && audioSource != null)
+            audioSource.PlayOneShot(stepSound, 0.6f);
     }
 
     void Look()
