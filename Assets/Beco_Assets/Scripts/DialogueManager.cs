@@ -35,6 +35,8 @@ public class DialogueManager : MonoBehaviour
     private int currentLine = 0;
     private bool isTyping = false; 
     private Coroutine blinkCoroutine;
+    private bool _isDialogueActive = false;
+    public bool isDialogueActive => _isDialogueActive;
 
     void Awake()
     {
@@ -90,6 +92,7 @@ public class DialogueManager : MonoBehaviour
     public void StartDialogue(DialogueData data)
     {
         currentDialogueData = data;
+        _isDialogueActive = true;
         currentLine = 0;
         dialogueBox.SetActive(true);
         ShowLine();
@@ -230,6 +233,7 @@ public class DialogueManager : MonoBehaviour
 
     private void EndDialogue()
     {
+         _isDialogueActive = false;
         StopBlinking();
         if (dialogueBox != null) dialogueBox.SetActive(false);
         if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);

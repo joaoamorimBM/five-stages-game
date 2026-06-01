@@ -91,6 +91,6 @@ public class DoorController : MonoBehaviour, IInteractable
 
     public string GetPromptText()
     {
-        return isOpen ? "[E] Fechar porta" : "[E] Abrir porta";
+        return isOpen ?  "[E] Abrir porta" : "[E] Fechar porta";
     }
 }

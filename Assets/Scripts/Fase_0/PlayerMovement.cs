@@ -102,4 +102,27 @@ public class PlayerMovement : MonoBehaviour
         cam.transform.localRotation = Quaternion.Euler(rotX, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
     }
+public void SetMovementLocked(bool locked)
+{
+    enabled = !locked;
+
+    // Para a animação quando travado
+    Animator anim = GetComponentInChildren<Animator>();
+    if (anim != null)
+    {
+        if (locked)
+        {
+            // Força idle — velocidade zero
+            anim.SetFloat("speed", 0f);
+            anim.speed = 0f;  // pausa a animação completamente
+        }
+        else
+        {
+            anim.speed = 1f;  // retoma a animação
+        }
+    }
+
+    if (!locked)
+        Cursor.lockState = CursorLockMode.Locked;
+}
 }
