@@ -3,53 +3,73 @@ using UnityEngine;
 public class InvisibleWall : MonoBehaviour
 {
     [Header("Referências")]
-    public Transform           player;
+    public CharacterController playerCC;
     public PlayerMovement      playerMovement;
 
     [Header("Configurações")]
-    public float blockDistance = 1.2f;  // distância que trava o player
-    public float pushForce     = 3f;    // força que empurra de volta
+    public float blockDistance = 1.5f;
 
-    Vector3 blockedDirection;
-    bool    isBlocked = false;
+    bool  isBlocking = false;
+    float savedWalkSpeed;
+    float savedRunSpeed;
+
+    void Start()
+    {
+        // Cria o collider físico sólido automaticamente
+        BoxCollider col = gameObject.AddComponent<BoxCollider>();
+        col.isTrigger = false;
+        col.size      = new Vector3(5f, 3f, 0.5f);
+
+        if (playerCC       == null) Debug.LogError("CharacterController não atribuído!");
+        if (playerMovement == null) Debug.LogError("PlayerMovement não atribuído!");
+
+        if (playerMovement != null)
+        {
+            savedWalkSpeed = playerMovement.walkSpeed;
+            savedRunSpeed  = playerMovement.runSpeed;
+        }
+    }
 
     void Update()
     {
-        if (player == null) return;
+        if (playerCC == null) return;
 
-        float distance = Vector3.Distance(transform.position, player.position);
+        float distance = Vector3.Distance(
+            transform.position,
+            playerCC.transform.position
+        );
 
-        if (distance <= blockDistance)
+        if (distance <= blockDistance && !isBlocking)
         {
-            isBlocked = true;
-
-            // Empurra o player para trás (para longe da porta)
-            Vector3 pushDirection = (player.position - transform.position).normalized;
-            pushDirection.y = 0f;
-
-            player.position += pushDirection * pushForce * Time.deltaTime;
-
-            // Deixa o movimento mais pesado (como na Fase 3 do GDD)
+            isBlocking = true;
             if (playerMovement != null)
-                playerMovement.walkSpeed = Mathf.Lerp(
-                    playerMovement.walkSpeed, 0.3f, Time.deltaTime * 3f
-                );
+            {
+                playerMovement.walkSpeed = 0f;
+                playerMovement.runSpeed  = 0f;
+            }
         }
-        else
+        else if (distance > blockDistance && isBlocking)
         {
-            isBlocked = false;
-
-            // Restaura velocidade normal ao sair
+            isBlocking = false;
             if (playerMovement != null)
-                playerMovement.walkSpeed = Mathf.Lerp(
-                    playerMovement.walkSpeed, 2.5f, Time.deltaTime * 3f
-                );
+            {
+                playerMovement.walkSpeed = savedWalkSpeed;
+                playerMovement.runSpeed  = savedRunSpeed;
+            }
+        }
+
+        // Enquanto bloqueado, empurra para trás continuamente
+        if (isBlocking)
+        {
+            Vector3 pushDir = (playerCC.transform.position - transform.position).normalized;
+            pushDir.y = 0f;
+            playerCC.Move(pushDir * 2f * Time.deltaTime);
         }
     }
 
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, blockDistance);
+        Gizmos.DrawWireCube(transform.position, new Vector3(5f, 3f, 0.5f));
     }
 }
