@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "FiveStages.slnx",
+    "dotnet.defaultSolution": "five-stages-game.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
