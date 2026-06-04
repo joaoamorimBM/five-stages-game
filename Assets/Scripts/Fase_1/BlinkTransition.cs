@@ -14,9 +14,21 @@ public class BlinkTransition : MonoBehaviour
         Instance = this;
     }
 
+    // Usado pela padaria
     public void DoBlink(System.Action onBlackScreen)
     {
         StartCoroutine(BlinkRoutine(onBlackScreen));
+    }
+
+    // Usado pelo acidente
+    public IEnumerator FadeToBlack()
+    {
+        yield return StartCoroutine(Fade(0f, 1f, 0.1f));
+    }
+
+    public IEnumerator FadeFromBlack()
+    {
+        yield return StartCoroutine(Fade(1f, 0f, 0.15f));
     }
 
     private IEnumerator BlinkRoutine(System.Action onBlackScreen)
