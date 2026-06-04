@@ -1,8 +1,19 @@
 fileFormatVersion: 2
+<<<<<<< HEAD:Assets/materials/Mat_Fog.mat.meta
 guid: 74eb05c0aee71d84bb5ef554d3d33716
+=======
+guid: a6560a915ef98420e9faacc1c7438823
+>>>>>>> origin/develop:Assets/Settings/SampleSceneProfile.asset.meta
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 2100000
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 336056
+  packageName: TV LED 30"
+  packageVersion: 1.0
+  assetPath: Assets/Settings/SampleSceneProfile.asset
+  uploadId: 795400
