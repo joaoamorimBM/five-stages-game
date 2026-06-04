@@ -125,4 +125,15 @@ public void SetMovementLocked(bool locked)
     if (!locked)
         Cursor.lockState = CursorLockMode.Locked;
 }
+
+public void ForceRotation(float playerYAngle, float cameraXAngle)
+{
+    // Rotaciona o corpo do player no eixo Y
+    transform.rotation = Quaternion.Euler(0f, playerYAngle, 0f);
+    
+    // Força o pitch da câmera
+    rotX = cameraXAngle;
+    if (cam != null)
+        cam.transform.localRotation = Quaternion.Euler(rotX, 0f, 0f);
+}
 }
