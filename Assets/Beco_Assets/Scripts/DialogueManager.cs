@@ -56,17 +56,16 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        // Garante que a UI comece limpa e escondida
-        if (dialogueBox != null) dialogueBox.SetActive(false);
-        if (nextTextIndicator != null) nextTextIndicator.SetActive(false);
-        
-        // Esconde os retratos inicialmente
-        if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
-        if (portraitRight != null) portraitRight.gameObject.SetActive(false);
-        if (portraitRight != null) originalPortraitRightY = portraitRight.rectTransform.anchoredPosition.y;
-    }
+  private void Start()
+{
+    // Garante que a UI comece limpa e escondida
+    if (dialogueBox != null) dialogueBox.SetActive(false);
+    if (nextTextIndicator != null) nextTextIndicator.SetActive(false);
+    
+    // Esconde os retratos inicialmente
+    if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
+    if (portraitRight != null) portraitRight.gameObject.SetActive(false);
+}
 
     private void Update()
     {
@@ -95,13 +94,16 @@ public class DialogueManager : MonoBehaviour
 
     // O gatilho agora chama esta função passando o ScriptableObject diretamente
     public void StartDialogue(DialogueData data)
-    {
-        currentDialogueData = data;
-        _isDialogueActive = true;
-        currentLine = 0;
-        dialogueBox.SetActive(true);
-        ShowLine();
-    }
+{
+    // --- NOVA LINHA: Captura a altura correta configurada para esta cena específica antes de modificar ---
+    if (portraitRight != null) originalPortraitRightY = portraitRight.rectTransform.anchoredPosition.y;
+
+    currentDialogueData = data;
+    _isDialogueActive = true;
+    currentLine = 0;
+    dialogueBox.SetActive(true);
+    ShowLine();
+}
 
     private void ShowLine()
 {
@@ -141,7 +143,7 @@ public class DialogueManager : MonoBehaviour
     }
     else
     {
-        // Ativa e destaca o lado direito ( Claire / Emily / Atendente )
+        // Ativa e destaca o lado direito ( Claire / Emily / Grace / Atendente )
         groupNameLeft.SetActive(false);
         groupNameRight.SetActive(true);
         textNameRight.text = speakerName;
@@ -154,21 +156,21 @@ public class DialogueManager : MonoBehaviour
         if (portraitLeft != null && portraitLeft.sprite != null) 
             portraitLeft.color = corSemFoco;
 
-        // --- LÓGICA CORRIGIDA DE POSICIONAMENTO ---
+        // --- LÓGICA CORRIGIDA E SEGURA DE POSICIONAMENTO ---
         if (portraitRight != null)
         {
             portraitRight.rectTransform.localScale = new Vector3(1f, 1f, 1f);
 
-            // Se for a Claire, nós pegamos a altura original do Inspector e subtraímos um valor
+            // Apenas SE for a Claire nós alteramos a altura do RectTransform
             if (lineInfo.speaker.ToString() == "Claire")
             {
-                // Comece testando com um recuo pequeno (ex: -50f ou -80f) em relação ao original
                 float novaAltura = originalPortraitRightY - 35f; 
                 portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, novaAltura);
             }
             else
             {
-                // Para a Emily e outros, devolve EXATAMENTE a altura que estava no Inspector antes do bug
+                // Para a Grace, Emily e qualquer outra, nós RESETAMOS para a posição zero local da UI
+                // Isso impede que elas herdem posições quebradas vindas de outras cenas!
                 portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
             }
         }

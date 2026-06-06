@@ -15,19 +15,19 @@ MonoBehaviour:
   dialogueLines:
   - speaker: 0
     sentence: Bom dia, Grace.
-  - speaker: 3
+  - speaker: 5
     sentence: "Noah! Que bom te ver. Como voc\xEA e a Emily est\xE3o?"
   - speaker: 0
     sentence: "Bem. A gente t\xE1 bem."
-  - speaker: 3
+  - speaker: 5
     sentence: ...Noah
   - speaker: 0
     sentence: "Me v\xEA um caf\xE9 preto com tapioca e um misto com chocolate quente."
-  - speaker: 3
+  - speaker: 5
     sentence: "O de sempre ent\xE3o... Capricha no chocolate?"
   - speaker: 0
     sentence: Bastante chocolate, sim.
-  - speaker: 3
+  - speaker: 5
     sentence: "Pode sentar que eu te levo, t\xE1? E Noah... se precisar de alguma
       coisa, t\xF4 aqui."
   - speaker: 0
