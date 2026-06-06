@@ -11,7 +11,7 @@ public class CharacterDatabase : ScriptableObject
         Emily,
         Emily_Acidente,
         Claire,
-        Atendente,
+        Grace,
         Pai_de_familia,
         crianca,
     }

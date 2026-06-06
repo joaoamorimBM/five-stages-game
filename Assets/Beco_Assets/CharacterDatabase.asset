@@ -23,7 +23,7 @@ MonoBehaviour:
     displayName: Claire
     defaultPortrait: {fileID: 21300000, guid: c30ce4836516b4ac1b13cb1b5fb00e53, type: 3}
   - characterType: 5
-    displayName: Atendente
+    displayName: Grace
     defaultPortrait: {fileID: 21300000, guid: ef46383eb1cd74537963d149670c0fdd, type: 3}
   - characterType: 3
     displayName: Emily
