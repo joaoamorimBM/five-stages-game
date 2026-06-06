@@ -41,22 +41,15 @@ public class ChairInteraction : MonoBehaviour
     void SitDown()
 {
     playerSat = true;
-
-    // Move para a posição da cadeira
     player.position = sitPosition.position;
-
-    // Força a rotação ANTES de travar
-    // sitPosition.eulerAngles.y = direção que o Noah vai olhar
-    // 0f = câmera reta (nem pra cima nem pra baixo)
     playerMovement.ForceRotation(sitPosition.eulerAngles.y, 0f);
-
-    // Agora trava tudo já na posição certa
     playerMovement.SetMovementLocked(true);
 
     if (chairGlow != null)
         chairGlow.gameObject.SetActive(false);
 
-    StartCoroutine(WaitThenBlink());
+    // Chama a sequência da padaria
+    FindObjectOfType<BakeryAnxiety>().StartSequence();
 }
 
     private IEnumerator WaitThenBlink()
