@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,6 +8,7 @@ using UnityEngine.UI;
 public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager Instance;
+    public static event Action OnDialogueEnded;
 
     [Header("Configuração Global")]
     [SerializeField] private CharacterDatabase characterDatabase;
@@ -32,6 +34,7 @@ public class DialogueManager : MonoBehaviour
 
     // Armazenamento dos dados ativos do diálogo
     private DialogueData currentDialogueData;
+    private float originalPortraitRightY;
     private int currentLine = 0;
     private bool isTyping = false; 
     private Coroutine blinkCoroutine;
@@ -61,6 +64,7 @@ public class DialogueManager : MonoBehaviour
         // Esconde os retratos inicialmente
         if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
         if (portraitRight != null) portraitRight.gameObject.SetActive(false);
+        if (portraitRight != null) originalPortraitRightY = portraitRight.rectTransform.anchoredPosition.y;
     }
 
     private void Update()
@@ -115,7 +119,6 @@ public class DialogueManager : MonoBehaviour
     Sprite speakerPortrait = profile.defaultPortrait;
 
     // CONFIGURAÇÃO DE CORES PARA FOCO/DESFOCO
-    // Altere esses valores se quiser mais ou menos escuridão (0.3f é bem focado, 1.0f é totalmente aceso)
     Color corFoco = Color.white; 
     Color corSemFoco = new Color(0.35f, 0.35f, 0.35f, 1f); // Deixa o personagem cinza escuro
 
@@ -137,7 +140,7 @@ public class DialogueManager : MonoBehaviour
     }
     else
     {
-        // Ativa e destaca o lado direito ( Emily / Atendente )
+        // Ativa e destaca o lado direito ( Claire / Emily / Atendente )
         groupNameLeft.SetActive(false);
         groupNameRight.SetActive(true);
         textNameRight.text = speakerName;
@@ -149,6 +152,25 @@ public class DialogueManager : MonoBehaviour
         // Tira o foco do Retrato da Esquerda
         if (portraitLeft != null && portraitLeft.sprite != null) 
             portraitLeft.color = corSemFoco;
+
+        // --- LÓGICA CORRIGIDA DE POSICIONAMENTO ---
+        if (portraitRight != null)
+        {
+            portraitRight.rectTransform.localScale = new Vector3(1f, 1f, 1f);
+
+            // Se for a Claire, nós pegamos a altura original do Inspector e subtraímos um valor
+            if (lineInfo.speaker.ToString() == "Claire")
+            {
+                // Comece testando com um recuo pequeno (ex: -50f ou -80f) em relação ao original
+                float novaAltura = originalPortraitRightY - 35f; 
+                portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, novaAltura);
+            }
+            else
+            {
+                // Para a Emily e outros, devolve EXATAMENTE a altura que estava no Inspector antes do bug
+                portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
+            }
+        }
     }
     
     // Digitação do Texto
@@ -238,5 +260,7 @@ public class DialogueManager : MonoBehaviour
         if (dialogueBox != null) dialogueBox.SetActive(false);
         if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
         if (portraitRight != null) portraitRight.gameObject.SetActive(false);
+
+        OnDialogueEnded?.Invoke();
     }
 }

@@ -16,12 +16,24 @@ MonoBehaviour:
   - characterType: 0
     displayName: Noah
     defaultPortrait: {fileID: 21300000, guid: 3162cd40b219e47029d53dfaad3c673a, type: 3}
-  - characterType: 1
+  - characterType: 2
     displayName: Emily
     defaultPortrait: {fileID: 21300000, guid: 728aae532c9fd48c0ada83e486c25166, type: 3}
-  - characterType: 2
+  - characterType: 4
     displayName: Claire
     defaultPortrait: {fileID: 21300000, guid: 3162cd40b219e47029d53dfaad3c673a, type: 3}
   - characterType: 3
     displayName: Grace
     defaultPortrait: {fileID: 21300000, guid: ef46383eb1cd74537963d149670c0fdd, type: 3}
+  - characterType: 3
+    displayName: Emily
+    defaultPortrait: {fileID: 21300000, guid: 8405f8b021e3242f691f2469a5e4aeed, type: 3}
+  - characterType: 1
+    displayName: Noah
+    defaultPortrait: {fileID: 21300000, guid: ce839d48f5b1840f5965ddb23bf9ac42, type: 3}
+  - characterType: 6
+    displayName: Pai de Familia
+    defaultPortrait: {fileID: 21300000, guid: 0735cc1a3ca564e398528a43ca35330a, type: 3}
+  - characterType: 7
+    displayName: "Crian\xE7a"
+    defaultPortrait: {fileID: 21300000, guid: 59c7eadbb39af40978e9df4679aa5c60, type: 3}

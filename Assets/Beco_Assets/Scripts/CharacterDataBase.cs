@@ -7,9 +7,13 @@ public class CharacterDatabase : ScriptableObject
     public enum CharacterType
     {
         Noah,
+        Noah_Acidente,
         Emily,
+        Emily_Acidente,
         Claire,
-        Atendente
+        Grace,
+        Pai_de_familia,
+        crianca,
     }
 
     [System.Serializable]
