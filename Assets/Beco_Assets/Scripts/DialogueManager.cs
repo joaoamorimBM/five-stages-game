@@ -41,6 +41,7 @@ public class DialogueManager : MonoBehaviour
     private bool _isDialogueActive = false;
     public bool isDialogueActive => _isDialogueActive;
 
+    public int currentLineIndex => currentLine;
     void Awake()
     {
         // Sistema de instância única (Singleton) para o DontDestroyOnLoad funcionar entre as cenas
