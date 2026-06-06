@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
+  m_Name: ConversaPadaria
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  dialogueLines:
+  - speaker: 0
+    sentence: Bom dia, Grace.
+  - speaker: 3
+    sentence: "Noah! Que bom te ver. Como voc\xEA e a Emily est\xE3o?"
+  - speaker: 0
+    sentence: "Bem. A gente t\xE1 bem."
+  - speaker: 3
+    sentence: ...Noah
+  - speaker: 0
+    sentence: "Me v\xEA um caf\xE9 preto com tapioca e um misto com chocolate quente."
+  - speaker: 3
+    sentence: "O de sempre ent\xE3o... Capricha no chocolate?"
+  - speaker: 0
+    sentence: Bastante chocolate, sim.
+  - speaker: 3
+    sentence: "Pode sentar que eu te levo, t\xE1? E Noah... se precisar de alguma
+      coisa, t\xF4 aqui."
+  - speaker: 0
+    sentence: "T\xF4 bem, Grace. Obrigado."
