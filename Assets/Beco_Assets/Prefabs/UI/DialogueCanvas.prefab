@@ -119,7 +119,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5320266509896052525}
-  - {fileID: 4101612923156461796}
   m_Father: {fileID: 304754716789895739}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -230,15 +229,15 @@ RectTransform:
   m_GameObject: {fileID: 1693854229005043901}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.6248597, y: 0.547138, z: 1.1236999}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3277019632262510858}
-  m_Father: {fileID: 3267570047950100181}
+  m_Father: {fileID: 304754716789895739}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 295.296, y: -35.571686}
+  m_AnchoredPosition: {x: -114.00015, y: -21.399986}
   m_SizeDelta: {x: 104.07001, y: 71.1434}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8306758247920472104
@@ -692,6 +691,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3267570047950100181}
+  - {fileID: 4101612923156461796}
   - {fileID: 1601248455049764107}
   - {fileID: 114622238606373168}
   m_Father: {fileID: 6068779615293999936}
@@ -757,7 +757,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 2
