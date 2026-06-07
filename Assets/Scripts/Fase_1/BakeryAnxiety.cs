@@ -17,6 +17,8 @@ public class BakeryAnxiety : MonoBehaviour
     public AudioSource ansiedade;
     public AudioSource corrida;
     public AudioSource cadeiraArrastando;
+    public AudioSource chuvaAmbiente;
+    public AudioSource trilha;
 
     [Header("Diálogos")]
     public DialogueData dialogoFamilia;
@@ -25,6 +27,8 @@ public class BakeryAnxiety : MonoBehaviour
     [Header("Configurações")]
     public float blinkDuration = 1.5f;
     public int indexZumbido = 3;
+    public float volumeTrilhaNormal = 1f;
+    public float volumeTrilhaDialogo = 0.3f;
 
     private Vignette vignette;
     private ChromaticAberration chromaticAberration;
@@ -34,11 +38,35 @@ public class BakeryAnxiety : MonoBehaviour
 
     void Start()
     {
+        // Garante que ao chegar na padaria o acidente sempre começa pela visita 1
+        if (GameManager.Instance != null)
+            GameManager.Instance.accidentVisit = 1;
+
         if (globalVolume != null && globalVolume.profile.TryGet(out vignette))
             vignette.intensity.value = 0f;
 
         if (globalVolume != null && globalVolume.profile.TryGet(out chromaticAberration))
             chromaticAberration.intensity.value = 0f;
+
+        if (chuvaAmbiente != null)
+        {
+            chuvaAmbiente.loop = true;
+            chuvaAmbiente.volume = 0.3f;
+            chuvaAmbiente.Play();
+        }
+
+        DialogueManager.OnDialogueEnded += OnDialogueEnded;
+    }
+
+    void OnDestroy()
+    {
+        DialogueManager.OnDialogueEnded -= OnDialogueEnded;
+    }
+
+    private void OnDialogueEnded()
+    {
+        if (trilha != null)
+            StartCoroutine(FadeTrilha(trilha.volume, volumeTrilhaNormal, 1f));
     }
 
     public void StartSequence()
@@ -52,44 +80,38 @@ public class BakeryAnxiety : MonoBehaviour
 
     private IEnumerator BakerySequence()
     {
-        // Fade para preto
+        yield return StartCoroutine(FadeTrilha(volumeTrilhaNormal, volumeTrilhaDialogo, 0.5f));
+
         yield return StartCoroutine(blinkTransition.FadeToBlack());
 
-        // Sino toca na tela preta
         if (sino != null)
             sino.Play();
 
         yield return new WaitForSeconds(blinkDuration);
 
-        // Família aparece ainda na tela preta
         if (familyGroup != null)
             familyGroup.SetActive(true);
 
-        // Abre a tela
         yield return StartCoroutine(blinkTransition.FadeFromBlack());
 
-        // Pausa antes do diálogo
         yield return new WaitForSeconds(1.5f);
 
-        // Inicia diálogo da família
         yield return null;
         DialogueManager.Instance.StartDialogue(dialogoFamilia);
         yield return null;
 
-        // Monitora índice para disparar efeitos
         StartCoroutine(MonitorDialogue());
 
-        // Espera o diálogo terminar
         yield return new WaitUntil(() => !DialogueManager.Instance.isDialogueActive);
 
-        // Para ansiedade e respiração
         if (respiracao != null) respiracao.Stop();
         if (ansiedade != null) ansiedade.Stop();
 
-        // Tela vai para o preto
+        if (trilha != null) StartCoroutine(FadeTrilha(trilha.volume, 0f, 1f));
+        if (chuvaAmbiente != null) StartCoroutine(FadeAudio(chuvaAmbiente, chuvaAmbiente.volume, 0f, 1f));
+
         yield return StartCoroutine(blinkTransition.FadeToBlack());
 
-        // Todos os sons tocam na tela preta
         if (cadeiraArrastando != null) cadeiraArrastando.Play();
         yield return new WaitForSeconds(0.8f);
 
@@ -103,17 +125,18 @@ public class BakeryAnxiety : MonoBehaviour
         if (sino != null) sino.Play();
         yield return new WaitForSeconds(1f);
 
-        // Para corrida após sininho
         if (corrida != null) corrida.Stop();
 
-        // Diálogo da Grace na tela preta
         yield return new WaitForSeconds(0.3f);
         yield return null;
         DialogueManager.Instance.StartDialogue(dialogoGraceFinal);
         yield return null;
         yield return new WaitUntil(() => !DialogueManager.Instance.isDialogueActive);
 
-        // Transição para o acidente
+        // Garante visita 1 na cena do acidente
+        if (GameManager.Instance != null)
+            GameManager.Instance.accidentVisit = 1;
+
         yield return new WaitForSeconds(2f);
         UnityEngine.SceneManagement.SceneManager.LoadScene("Acidente_Scene");
     }
@@ -124,7 +147,6 @@ public class BakeryAnxiety : MonoBehaviour
         {
             int index = DialogueManager.Instance.currentLineIndex;
 
-            // Element 3 — primeira fala da criança: inicia zumbido E respiração juntos
             if (index >= indexZumbido && !zumbidoStarted)
             {
                 zumbidoStarted = true;
@@ -177,5 +199,28 @@ public class BakeryAnxiety : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    private IEnumerator FadeTrilha(float from, float to, float duration)
+    {
+        if (trilha == null) yield break;
+        yield return StartCoroutine(FadeAudio(trilha, from, to, duration));
+    }
+
+    private IEnumerator FadeAudio(AudioSource source, float from, float to, float duration)
+    {
+        if (source == null) yield break;
+
+        float elapsed = 0f;
+        source.volume = from;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            source.volume = Mathf.Lerp(from, to, elapsed / duration);
+            yield return null;
+        }
+
+        source.volume = to;
     }
 }

@@ -10,7 +10,8 @@ public class AccidentController : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("AccidentController Start chamado! ForceVisit: " + forceVisit);
+        Debug.Log("AccidentController — accidentVisit: " + 
+            (GameManager.Instance != null ? GameManager.Instance.accidentVisit.ToString() : "NULL"));
 
         int visit;
 

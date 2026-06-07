@@ -11,11 +11,23 @@ public class GameManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            accidentVisit = 1;
             DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
+        }
+    }
+
+    // Garante que sempre existe um GameManager
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void CreateInstance()
+    {
+        if (Instance == null)
+        {
+            GameObject go = new GameObject("GameManager");
+            go.AddComponent<GameManager>();
         }
     }
 }
