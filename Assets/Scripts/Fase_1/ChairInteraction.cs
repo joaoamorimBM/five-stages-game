@@ -18,6 +18,10 @@ public class ChairInteraction : MonoBehaviour
     void Start()
     {
         playerMovement = player.GetComponent<PlayerMovement>();
+
+        // Luz começa apagada
+        if (chairGlow != null)
+            chairGlow.gameObject.SetActive(false);
     }
 
     void Update()
@@ -36,29 +40,23 @@ public class ChairInteraction : MonoBehaviour
     public void Activate()
     {
         isAvailable = true;
+
+        // Liga a luz quando a cadeira fica disponível
+        if (chairGlow != null)
+            chairGlow.gameObject.SetActive(true);
     }
 
     void SitDown()
-{
-    playerSat = true;
-    player.position = sitPosition.position;
-    playerMovement.ForceRotation(sitPosition.eulerAngles.y, 0f);
-    playerMovement.SetMovementLocked(true);
-
-    if (chairGlow != null)
-        chairGlow.gameObject.SetActive(false);
-
-    // Chama a sequência da padaria
-    FindObjectOfType<BakeryAnxiety>().StartSequence();
-}
-
-    private IEnumerator WaitThenBlink()
     {
-        yield return new WaitForSeconds(3f);
+        playerSat = true;
+        player.position = sitPosition.position;
+        playerMovement.ForceRotation(sitPosition.eulerAngles.y, 0f);
+        playerMovement.SetMovementLocked(true);
 
-        BlinkTransition.Instance.DoBlink(() =>
-        {
-            // Por enquanto vazio — família virá depois
-        });
+        if (chairGlow != null)
+            chairGlow.gameObject.SetActive(false);
+
+        // Chama a sequência da padaria
+        FindObjectOfType<BakeryAnxiety>().StartSequence();
     }
 }

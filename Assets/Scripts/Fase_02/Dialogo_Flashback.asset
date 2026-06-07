@@ -13,21 +13,21 @@ MonoBehaviour:
   m_Name: Dialogo_Flashback
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   dialogueLines:
-  - speaker: 1
+  - speaker: 3
     sentence: FICA COMIGO, MINHA FILHA!
-  - speaker: 1
+  - speaker: 3
+    sentence: POR FAVOR... POR FAVOR, ACORDA, CLAIRE!
+  - speaker: 3
     sentence: POR FAVOR... POR FAVOR, ACORDA, CLAIRE!
   - speaker: 1
-    sentence: POR FAVOR... POR FAVOR, ACORDA, CLAIRE!
-  - speaker: 0
     sentence: ...
-  - speaker: 1
+  - speaker: 3
     sentence: REAGE, CLAIRE! REAGE, MEU AMOR!
-  - speaker: 1
+  - speaker: 3
     sentence: DEUS, POR FAVOR... EU IMPLORO!
-  - speaker: 1
+  - speaker: 3
     sentence: "POR FAVOR, N\xC3O LEVE MINHA FILHA!"
-  - speaker: 1
+  - speaker: 3
     sentence: REAGE, MEU AMOR... POR FAVOR!
-  - speaker: 1
+  - speaker: 3
     sentence: AAAAARRGH!

@@ -19,7 +19,7 @@ public class AccidentScene : MonoBehaviour
     public float triggerDistance = 3f;
 
     private bool eventTriggered = false;
-    private int blinkCount = 0; // controla qual blink é
+    private int blinkCount = 0;
 
     void Start()
     {
@@ -64,7 +64,6 @@ public class AccidentScene : MonoBehaviour
 
         yield return StartCoroutine(blinkTransition.FadeToBlack());
 
-        // Teleporta durante a tela preta
         player.position = startPosition.position;
         player.GetComponent<PlayerMovement>().ForceRotation(
             startPosition.eulerAngles.y, 0f
@@ -73,7 +72,6 @@ public class AccidentScene : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
         yield return StartCoroutine(blinkTransition.FadeFromBlack());
 
-        // Libera para andar e fala
         player.GetComponent<PlayerMovement>().SetMovementLocked(false);
 
         yield return null;
@@ -82,7 +80,7 @@ public class AccidentScene : MonoBehaviour
         yield return new WaitUntil(() => !DialogueManager.Instance.isDialogueActive);
 
         blinkCount = 1;
-        eventTriggered = false; // libera o trigger para o próximo
+        eventTriggered = false;
     }
 
     private IEnumerator Blink2()
@@ -114,17 +112,20 @@ public class AccidentScene : MonoBehaviour
     {
         player.GetComponent<PlayerMovement>().SetMovementLocked(true);
 
-        // Tela fica preta e não volta
         yield return StartCoroutine(blinkTransition.FadeToBlack());
 
         yield return new WaitForSeconds(0.8f);
 
-        // Diálogo da Emily na tela preta
         yield return null;
         DialogueManager.Instance.StartDialogue(dialogoEmily);
         yield return null;
         yield return new WaitUntil(() => !DialogueManager.Instance.isDialogueActive);
 
-        Debug.Log("Fim da cena do acidente — próxima cena");
+        // Atualiza visita para 2 antes de ir para o beco
+        if (GameManager.Instance != null)
+            GameManager.Instance.accidentVisit = 2;
+
+        yield return new WaitForSeconds(1f);
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Scene_Alley");
     }
 }
