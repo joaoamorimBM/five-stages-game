@@ -14,6 +14,8 @@ public class CharacterDatabase : ScriptableObject
         Grace,
         Pai_de_familia,
         crianca,
+        Noah_raiva,
+        Ambos
     }
 
     [System.Serializable]
