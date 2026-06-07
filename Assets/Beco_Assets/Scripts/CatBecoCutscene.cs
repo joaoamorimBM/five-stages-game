@@ -20,15 +20,15 @@ public class CatBecoCutscene : MonoBehaviour
     private int currentWaypointIndex = 0;
     private Transform[] pathWaypoints;
 
-    private void OnEnable()
-    {
-        DialogueManager.OnDialogueEnded += StartCatEscape;
-    }
+    // private void OnEnable()
+    // {
+    //     DialogueManager.OnDialogueEnded += StartCatEscape;
+    // }
 
-    private void OnDisable()
-    {
-        DialogueManager.OnDialogueEnded -= StartCatEscape;
-    }
+    // private void OnDisable()
+    // {
+    //     DialogueManager.OnDialogueEnded -= StartCatEscape;
+    // }
 
     private void Start()
     {
@@ -67,22 +67,27 @@ public class CatBecoCutscene : MonoBehaviour
         }
     }
 
-    private void StartCatEscape()
+   public void StartCatEscape()
+{
+    // Forçamos dialogueStarted para true para garantir que o gato ande,
+    // mesmo que o diálogo tenha sido disparado pelo SequenceManager
+    dialogueStarted = true; 
+
+    if (!shouldMove)
     {
-        if (dialogueStarted && !shouldMove)
-        {
-            shouldMove = true;
-            currentWaypointIndex = 0; // Começa indo para o Ponto 1 (Saída)
-        }
+        shouldMove = true;
+        currentWaypointIndex = 0; // Começa indo para o Ponto 1 (Saída)
     }
+}
+
 
     private void MoveAlongPath()
     {
-        // Verifica se ainda temos pontos válidos para andar
+        // Verifica se ainda temos pontos válidos para andar ou se o caminho acabou
         if (currentWaypointIndex >= pathWaypoints.Length || pathWaypoints[currentWaypointIndex] == null)
         {
             shouldMove = false;
-            gameObject.SetActive(false); // Desativa o gato quando completa todo o percurso
+            gameObject.SetActive(false); // Desativa o gato (O BecoSequenceManager vai notar isso automaticamente!)
             return;
         }
 
@@ -91,10 +96,17 @@ public class CatBecoCutscene : MonoBehaviour
         // Move frame a frame em direção ao waypoint atual
         transform.position = Vector3.MoveTowards(transform.position, targetTarget.position, walkSpeed * Time.deltaTime);
 
-        // Se o gato chegou muito perto do waypoint atual, ele muda o foco para o próximo ponto
+        // Se o gato chegou muito perto do waypoint atual, muda o foco para o próximo ponto
         if (Vector3.Distance(transform.position, targetTarget.position) < 0.05f)
         {
             currentWaypointIndex++;
+            
+            // Se após o incremento alcançamos o fim do array, desativa o gato imediatamente
+            if (currentWaypointIndex >= pathWaypoints.Length)
+            {
+                shouldMove = false;
+                gameObject.SetActive(false); 
+            }
         }
     }
 

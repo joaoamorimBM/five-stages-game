@@ -21,7 +21,7 @@ MonoBehaviour:
     defaultPortrait: {fileID: 21300000, guid: 728aae532c9fd48c0ada83e486c25166, type: 3}
   - characterType: 4
     displayName: Claire
-    defaultPortrait: {fileID: 21300000, guid: 3162cd40b219e47029d53dfaad3c673a, type: 3}
+    defaultPortrait: {fileID: 21300000, guid: c30ce4836516b4ac1b13cb1b5fb00e53, type: 3}
   - characterType: 5
     displayName: Grace
     defaultPortrait: {fileID: 21300000, guid: ef46383eb1cd74537963d149670c0fdd, type: 3}
@@ -37,3 +37,6 @@ MonoBehaviour:
   - characterType: 7
     displayName: "Crian\xE7a"
     defaultPortrait: {fileID: 21300000, guid: 59c7eadbb39af40978e9df4679aa5c60, type: 3}
+  - characterType: 8
+    displayName: Noah
+    defaultPortrait: {fileID: 21300000, guid: 5798cc79ec86e477ead50f7b4351d605, type: 3}
