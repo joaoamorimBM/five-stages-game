@@ -10,9 +10,9 @@ public class SceneTransition : MonoBehaviour, IInteractable
     public string promptMessage = "[E] Sair de casa";
 
     [Header("Referências")]
-    public GameObject     confirmPanel;
+    public GameObject    confirmPanel;
     public PlayerMovement playerMovement;
-    public Image          fadeImage;
+    public Image         fadeImage;
 
     [Header("Sons da Transição")]
     public AudioClip soundPortaCasa;
@@ -20,7 +20,7 @@ public class SceneTransition : MonoBehaviour, IInteractable
     public AudioClip soundSinoPadaria;
 
     [Header("Timing total com tela preta")]
-    public float tempoTelaPreта = 14f;  // tempo total antes de carregar
+    public float tempoTelaPreta = 14f;  // ← Corrigido caracteres cirílicos aqui
 
     AudioSource audioSource;
 
@@ -100,7 +100,7 @@ public class SceneTransition : MonoBehaviour, IInteractable
         if (soundPassos      != null) tempoUsado += soundPassos.length;
         if (soundSinoPadaria != null) tempoUsado += soundSinoPadaria.length;
 
-        float tempoRestante = tempoTelaPreта - tempoUsado;
+        float tempoRestante = tempoTelaPreta - tempoUsado; // ← Corrigido aqui também
         if (tempoRestante > 0f)
             yield return new WaitForSeconds(tempoRestante);
 
