@@ -10,16 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
-  m_Name: TesteDialogo
+  m_Name: Claire_Noah_raiva
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   dialogueLines:
-  - speaker: 0
-    sentence: "Este \xE9 o teste para o meu retrato no lado esquerdo"
-  - speaker: 5
-    sentence: E eu sou a atendente, aparecendo no lado direito pra te ajudar
-  - speaker: 2
-    sentence: "Noah, voc\xEA consegue me ver aqui tamb\xE9m?"
-  - speaker: 0
-    sentence: "Perfeito. O sistema est\xE1 alternando entre todos n\xF3s perfeitamente"
   - speaker: 4
-    sentence: Baixou o santo... ohhhhh
+    sentence: ...
