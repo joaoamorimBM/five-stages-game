@@ -104,81 +104,104 @@ public class DialogueManager : MonoBehaviour
     ShowLine();
 }
 
-    private void ShowLine()
-{
-    if (currentDialogueData == null || currentLine >= currentDialogueData.dialogueLines.Length)
+private void ShowLine()
     {
-        EndDialogue();
-        return;
-    }
-
-    // Pega a linha atual
-    DialogueData.DialogueLine lineInfo = currentDialogueData.dialogueLines[currentLine];
-    
-    // Busca o perfil completo do personagem no Banco de Dados automaticamente
-    CharacterDatabase.CharacterProfile profile = characterDatabase.GetProfile(lineInfo.speaker);
-    string speakerName = profile.displayName;
-    Sprite speakerPortrait = profile.defaultPortrait;
-
-    // CONFIGURAÇÃO DE CORES PARA FOCO/DESFOCO
-    Color corFoco = Color.white; 
-    Color corSemFoco = new Color(0.35f, 0.35f, 0.35f, 1f); // Deixa o personagem cinza escuro
-
-    // LÓGICA DE POSIÇÃO, NOME E FOCO DO PERSONAGEM
-    if (lineInfo.speaker == CharacterDatabase.CharacterType.Noah)
-    {
-        // Ativa e destaca o lado esquerdo (Protagonista)
-        groupNameLeft.SetActive(true);
-        groupNameRight.SetActive(false);
-        textNameLeft.text = speakerName;
-
-        // Atualiza o Retrato da Esquerda e dá FOCO
-        UpdatePortrait(portraitLeft, speakerPortrait);
-        if (portraitLeft != null) portraitLeft.color = corFoco;
-
-        // Tira o foco do Retrato da Direita (se houver alguma imagem lá)
-        if (portraitRight != null && portraitRight.sprite != null) 
-            portraitRight.color = corSemFoco;
-    }
-    else
-    {
-        // Ativa e destaca o lado direito ( Claire / Emily / Grace / Atendente )
-        groupNameLeft.SetActive(false);
-        groupNameRight.SetActive(true);
-        textNameRight.text = speakerName;
-
-        // Atualiza o Retrato da Direita e dá FOCO
-        UpdatePortrait(portraitRight, speakerPortrait);
-        if (portraitRight != null) portraitRight.color = corFoco;
-
-        // Tira o foco do Retrato da Esquerda
-        if (portraitLeft != null && portraitLeft.sprite != null) 
-            portraitLeft.color = corSemFoco;
-
-        // --- LÓGICA CORRIGIDA E SEGURA DE POSICIONAMENTO ---
-        if (portraitRight != null)
+        if (currentDialogueData == null || currentLine >= currentDialogueData.dialogueLines.Length)
         {
-            portraitRight.rectTransform.localScale = new Vector3(1f, 1f, 1f);
+            EndDialogue();
+            return;
+        }
 
-            // Apenas SE for a Claire nós alteramos a altura do RectTransform
-            if (lineInfo.speaker.ToString() == "Claire")
+        // Pega a linha atual
+        DialogueData.DialogueLine lineInfo = currentDialogueData.dialogueLines[currentLine];
+        
+        // Busca o perfil completo do personagem no Banco de Dados automaticamente
+        CharacterDatabase.CharacterProfile profile = characterDatabase.GetProfile(lineInfo.speaker);
+        string speakerName = profile.displayName;
+        Sprite speakerPortrait = profile.defaultPortrait;
+
+        // CONFIGURAÇÃO DE CORES PARA FOCO/DESFOCO
+        Color corFoco = Color.white; 
+        Color corSemFoco = new Color(0.35f, 0.35f, 0.35f, 1f); 
+
+        // =========================================================================
+        // NOVA ADIÇÃO: LÓGICA PARA FALA DUPLA EM UNÍSSONO (NOAH E EMILY JUNTOS)
+        // =========================================================================
+        if (lineInfo.speaker == CharacterDatabase.CharacterType.Ambos)
+        {
+            // 1. Ativa as duas caixas de nome ao mesmo tempo na tela!
+            groupNameLeft.SetActive(true);
+            groupNameRight.SetActive(true);
+
+            // 2. Força o nome de cada um no seu devido lado para ficar organizado
+            textNameLeft.text = "Noah";
+            textNameRight.text = "Emily";
+
+            // 3. Dá FOCO TOTAL (Cor branca) para os dois retratos na tela simultaneamente
+            if (portraitLeft != null && portraitLeft.gameObject.activeSelf) portraitLeft.color = corFoco;
+            if (portraitRight != null && portraitRight.gameObject.activeSelf) portraitRight.color = corFoco;
+
+            // Se for a Emily fantasma, garante que a altura do retrato dela resete para o padrão
+            if (portraitRight != null)
             {
-                float novaAltura = originalPortraitRightY - 35f; 
-                portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, novaAltura);
-            }
-            else
-            {
-                // Para a Grace, Emily e qualquer outra, nós RESETAMOS para a posição zero local da UI
-                // Isso impede que elas herdem posições quebradas vindas de outras cenas!
                 portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
             }
         }
+        // =========================================================================
+        // RESTO DO CÓDIGO PADRÃO ( Noah / Outros )
+        // =========================================================================
+        else if (lineInfo.speaker == CharacterDatabase.CharacterType.Noah)
+        {
+            // Ativa e destaca o lado esquerdo (Protagonista)
+            groupNameLeft.SetActive(true);
+            groupNameRight.SetActive(false);
+            textNameLeft.text = speakerName;
+
+            // Atualiza o Retrato da Esquerda e dá FOCO
+            UpdatePortrait(portraitLeft, speakerPortrait);
+            if (portraitLeft != null) portraitLeft.color = corFoco;
+
+            // Tira o foco do Retrato da Direita (se houver alguma imagem lá)
+            if (portraitRight != null && portraitRight.sprite != null) 
+                portraitRight.color = corSemFoco;
+        }
+        else
+        {
+            // Ativa e destaca o lado direito ( Claire / Emily / Grace / Atendente )
+            groupNameLeft.SetActive(false);
+            groupNameRight.SetActive(true);
+            textNameRight.text = speakerName;
+
+            // Atualiza o Retrato da Direita e dá FOCO
+            UpdatePortrait(portraitRight, speakerPortrait);
+            if (portraitRight != null) portraitRight.color = corFoco;
+
+            // Tira o foco do Retrato da Esquerda
+            if (portraitLeft != null && portraitLeft.sprite != null) 
+                portraitLeft.color = corSemFoco;
+
+            // --- LÓGICA CORRIGIDA E SEGURA DE POSICIONAMENTO ---
+            if (portraitRight != null)
+            {
+                portraitRight.rectTransform.localScale = new Vector3(1f, 1f, 1f);
+
+                // Apenas SE for a Claire nós alteramos a altura do RectTransform
+                if (lineInfo.speaker.ToString() == "Claire")
+                {
+                    float novaAltura = originalPortraitRightY - 35f; 
+                    portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, novaAltura);
+                }
+                else
+                {
+                    portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
+                }
+            }
+        }
+        
+        // Digitação do Texto
+        StopBlinking();
+        StartCoroutine(TypeSentence(lineInfo.sentence));
     }
-    
-    // Digitação do Texto
-    StopBlinking();
-    StartCoroutine(TypeSentence(lineInfo.sentence));
-}
 
     private void UpdatePortrait(Image portraitImage, Sprite characterSprite)
     {
