@@ -18959,7 +18959,6 @@ MonoBehaviour:
   gatoScript: {fileID: 348526794}
   lataLixoRb: {fileID: 734136358}
   dialogoGato: {fileID: 11400000, guid: c77dd2fa6326d4c00958b7a01f78c6eb, type: 2}
-  memoriaClaireDialogue: {fileID: 11400000, guid: 44dcb3ea8004a4f0497b552b47c7be67, type: 2}
   noahReacaoDialogue: {fileID: 11400000, guid: 732733b70009a41918fb7013b4d59b72, type: 2}
   dialogoAntesFlashback: {fileID: 11400000, guid: ae834aa479591421bbaf53ed88c0e2f5, type: 2}
   dialogoPosFlashback: {fileID: 11400000, guid: 1a56419a936304ff8b9797e54bf93ddb, type: 2}
@@ -18973,6 +18972,7 @@ MonoBehaviour:
   emilyPrefab: {fileID: 495230792}
   pontoOlharEmily: {fileID: 1996045383}
   distanciaAtivacaoGato: 4
+  alleyIntroManager: {fileID: 1752885027}
 --- !u!4 &1465491387
 Transform:
   m_ObjectHideFlags: 0
@@ -19607,6 +19607,7 @@ MonoBehaviour:
   respiracao: {fileID: 1970163818}
   heartbeat: {fileID: 1144280576}
   recoveryDuration: 4
+  angerBuildDuration: 6
 --- !u!4 &1752885028
 Transform:
   m_ObjectHideFlags: 0

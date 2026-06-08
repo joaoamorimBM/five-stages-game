@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -41,18 +42,49 @@ public class DialogueManager : MonoBehaviour
     public bool isDialogueActive => _isDialogueActive;
     public int currentLineIndex => currentLine;
 
+    // Controla qual personagem está em qual lado
+    private CharacterDatabase.CharacterType leftSpeaker;
+    private CharacterDatabase.CharacterType rightSpeaker;
+    private bool leftSpeakerSet = false;
+    private bool rightSpeakerSet = false;
+
     void Awake()
     {
         if (Instance == null) 
         { 
             Instance = this; 
-            DontDestroyOnLoad(gameObject); 
+            DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else 
         { 
             Destroy(gameObject); 
         }
     }
+
+    void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+{
+    leftSpeakerSet = false;
+    rightSpeakerSet = false;
+    _isDialogueActive = false;
+
+    if (portraitLeft != null)
+    {
+        portraitLeft.sprite = null;  // limpa o sprite
+        portraitLeft.gameObject.SetActive(false);
+    }
+    if (portraitRight != null)
+    {
+        portraitRight.sprite = null;  // limpa o sprite
+        portraitRight.gameObject.SetActive(false);
+    }
+    if (dialogueBox != null) dialogueBox.SetActive(false);
+}
 
     private void Start()
     {
@@ -87,15 +119,21 @@ public class DialogueManager : MonoBehaviour
 
     public void StartDialogue(DialogueData data)
     {
-        if (portraitRight != null) originalPortraitRightY = portraitRight.rectTransform.anchoredPosition.y;
+        if (portraitRight != null) 
+            originalPortraitRightY = portraitRight.rectTransform.anchoredPosition.y;
+
         currentDialogueData = data;
         _isDialogueActive = true;
         currentLine = 0;
+
+        // Reseta o mapeamento de lados para cada novo diálogo
+        leftSpeakerSet = false;
+        rightSpeakerSet = false;
+
         dialogueBox.SetActive(true);
         ShowLine();
     }
 
-    // Novo método — avança automaticamente sem precisar de clique
     public IEnumerator PlayDialogueAuto(DialogueData data, float delayBetweenLines)
     {
         StartDialogue(data);
@@ -103,7 +141,6 @@ public class DialogueManager : MonoBehaviour
 
         while (_isDialogueActive)
         {
-            // Espera o texto terminar de digitar
             yield return new WaitUntil(() => !isTyping);
             yield return new WaitForSeconds(delayBetweenLines);
             if (_isDialogueActive)
@@ -127,52 +164,105 @@ public class DialogueManager : MonoBehaviour
         Color corFoco = Color.white; 
         Color corSemFoco = new Color(0.35f, 0.35f, 0.35f, 1f); 
 
+        // Caso especial: dois personagens falando juntos
         if (lineInfo.speaker == CharacterDatabase.CharacterType.Ambos)
         {
             groupNameLeft.SetActive(true);
             groupNameRight.SetActive(true);
             textNameLeft.text = "Noah";
             textNameRight.text = "Emily";
-            if (portraitLeft != null && portraitLeft.gameObject.activeSelf) portraitLeft.color = corFoco;
-            if (portraitRight != null && portraitRight.gameObject.activeSelf) portraitRight.color = corFoco;
+            if (portraitLeft != null && portraitLeft.gameObject.activeSelf) 
+                portraitLeft.color = corFoco;
+            if (portraitRight != null && portraitRight.gameObject.activeSelf) 
+                portraitRight.color = corFoco;
             if (portraitRight != null)
-                portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
+                portraitRight.rectTransform.anchoredPosition = new Vector2(
+                    portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
+
+            StopBlinking();
+            StartCoroutine(TypeSentence(lineInfo.sentence));
+            return;
         }
-        else if (lineInfo.speaker == CharacterDatabase.CharacterType.Noah)
+
+        // Determina o lado do speaker dinamicamente
+        bool falaEsquerda = false;
+
+        if (!leftSpeakerSet)
+        {
+            // Primeiro speaker sempre vai para a esquerda
+            leftSpeaker = lineInfo.speaker;
+            leftSpeakerSet = true;
+            falaEsquerda = true;
+        }
+        else if (lineInfo.speaker == leftSpeaker)
+        {
+            falaEsquerda = true;
+        }
+        else if (!rightSpeakerSet)
+        {
+            // Segundo speaker novo vai para a direita
+            rightSpeaker = lineInfo.speaker;
+            rightSpeakerSet = true;
+            falaEsquerda = false;
+        }
+        else if (lineInfo.speaker == rightSpeaker)
+        {
+            falaEsquerda = false;
+        }
+        else
+        {
+            // Terceiro speaker ou mais — substitui o lado direito
+            rightSpeaker = lineInfo.speaker;
+            falaEsquerda = false;
+        }
+
+        if (falaEsquerda)
         {
             groupNameLeft.SetActive(true);
             groupNameRight.SetActive(false);
             textNameLeft.text = speakerName;
+
             UpdatePortrait(portraitLeft, speakerPortrait);
             if (portraitLeft != null) portraitLeft.color = corFoco;
-            if (portraitRight != null && portraitRight.sprite != null) 
+
+            if (portraitRight != null && portraitRight.sprite != null)
+            {
+                portraitRight.gameObject.SetActive(true);
                 portraitRight.color = corSemFoco;
+            }
         }
         else
         {
             groupNameLeft.SetActive(false);
             groupNameRight.SetActive(true);
             textNameRight.text = speakerName;
+
             UpdatePortrait(portraitRight, speakerPortrait);
             if (portraitRight != null) portraitRight.color = corFoco;
-            if (portraitLeft != null && portraitLeft.sprite != null) 
+
+            if (portraitLeft != null && portraitLeft.sprite != null)
+            {
+                portraitLeft.gameObject.SetActive(true);
                 portraitLeft.color = corSemFoco;
+            }
 
             if (portraitRight != null)
             {
                 portraitRight.rectTransform.localScale = new Vector3(1f, 1f, 1f);
                 if (lineInfo.speaker.ToString() == "Claire")
                 {
-                    float novaAltura = originalPortraitRightY - 35f; 
-                    portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, novaAltura);
+                    float novaAltura = originalPortraitRightY - 35f;
+                    portraitRight.rectTransform.anchoredPosition = new Vector2(
+                        portraitRight.rectTransform.anchoredPosition.x, novaAltura);
                 }
                 else
                 {
-                    portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
+                    portraitRight.rectTransform.anchoredPosition = new Vector2(
+                        portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
                 }
             }
         }
-        
+
         StopBlinking();
         StartCoroutine(TypeSentence(lineInfo.sentence));
     }
