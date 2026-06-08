@@ -171,10 +171,20 @@ public class DialogueManager : MonoBehaviour
             groupNameRight.SetActive(true);
             textNameLeft.text = "Noah";
             textNameRight.text = "Emily";
+
+            // GARANTIA VISUAL: Busca os perfis individuais para estampar as fotos na tela
+            CharacterDatabase.CharacterProfile noahProfile = characterDatabase.GetProfile(CharacterDatabase.CharacterType.Noah);
+            CharacterDatabase.CharacterProfile emilyProfile = characterDatabase.GetProfile(CharacterDatabase.CharacterType.Emily);
+
+            if (noahProfile.defaultPortrait != null) UpdatePortrait(portraitLeft, noahProfile.defaultPortrait);
+            if (emilyProfile.defaultPortrait != null) UpdatePortrait(portraitRight, emilyProfile.defaultPortrait);
+
+            // Dá FOCO TOTAL (Cor branca) para os dois retratos na tela simultaneamente
             if (portraitLeft != null && portraitLeft.gameObject.activeSelf) 
                 portraitLeft.color = corFoco;
             if (portraitRight != null && portraitRight.gameObject.activeSelf) 
                 portraitRight.color = corFoco;
+
             if (portraitRight != null)
                 portraitRight.rectTransform.anchoredPosition = new Vector2(
                     portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);

@@ -32,7 +32,7 @@ MonoBehaviour:
     displayName: Noah
     defaultPortrait: {fileID: 21300000, guid: ce839d48f5b1840f5965ddb23bf9ac42, type: 3}
   - characterType: 6
-    displayName: Pai de Familia
+    displayName: Homem
     defaultPortrait: {fileID: 21300000, guid: 0735cc1a3ca564e398528a43ca35330a, type: 3}
   - characterType: 7
     displayName: "Crian\xE7a"
