@@ -5,6 +5,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
 
     public int accidentVisit = 1;
+    public bool returningFromFlashback = false;
 
     void Awake()
     {
@@ -20,7 +21,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Garante que sempre existe um GameManager
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void CreateInstance()
     {

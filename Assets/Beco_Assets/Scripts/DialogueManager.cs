@@ -32,7 +32,6 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float typingSpeed = 0.03f; 
     [SerializeField] private float blinkSpeed = 0.5f;
 
-    // Armazenamento dos dados ativos do diálogo
     private DialogueData currentDialogueData;
     private float originalPortraitRightY;
     private int currentLine = 0;
@@ -40,11 +39,10 @@ public class DialogueManager : MonoBehaviour
     private Coroutine blinkCoroutine;
     private bool _isDialogueActive = false;
     public bool isDialogueActive => _isDialogueActive;
-
     public int currentLineIndex => currentLine;
+
     void Awake()
     {
-        // Sistema de instância única (Singleton) para o DontDestroyOnLoad funcionar entre as cenas
         if (Instance == null) 
         { 
             Instance = this; 
@@ -56,22 +54,18 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
-  private void Start()
-{
-    // Garante que a UI comece limpa e escondida
-    if (dialogueBox != null) dialogueBox.SetActive(false);
-    if (nextTextIndicator != null) nextTextIndicator.SetActive(false);
-    
-    // Esconde os retratos inicialmente
-    if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
-    if (portraitRight != null) portraitRight.gameObject.SetActive(false);
-}
+    private void Start()
+    {
+        if (dialogueBox != null) dialogueBox.SetActive(false);
+        if (nextTextIndicator != null) nextTextIndicator.SetActive(false);
+        if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
+        if (portraitRight != null) portraitRight.gameObject.SetActive(false);
+    }
 
     private void Update()
     {
         if (!dialogueBox.activeSelf) return;
 
-        // Suporte para Barra de Espaço (New Input System) e Clique Esquerdo do Mouse
         bool spacePressed = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
         bool mousePressed = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
 
@@ -79,7 +73,6 @@ public class DialogueManager : MonoBehaviour
         {
             if (isTyping)
             {
-                // Se o jogador clicar enquanto o texto está digitando, pula direto para o final da frase
                 StopAllCoroutines();
                 dialogueText.text = currentDialogueData.dialogueLines[currentLine].sentence;
                 isTyping = false;
@@ -92,20 +85,33 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
-    // O gatilho agora chama esta função passando o ScriptableObject diretamente
     public void StartDialogue(DialogueData data)
-{
-    // --- NOVA LINHA: Captura a altura correta configurada para esta cena específica antes de modificar ---
-    if (portraitRight != null) originalPortraitRightY = portraitRight.rectTransform.anchoredPosition.y;
+    {
+        if (portraitRight != null) originalPortraitRightY = portraitRight.rectTransform.anchoredPosition.y;
+        currentDialogueData = data;
+        _isDialogueActive = true;
+        currentLine = 0;
+        dialogueBox.SetActive(true);
+        ShowLine();
+    }
 
-    currentDialogueData = data;
-    _isDialogueActive = true;
-    currentLine = 0;
-    dialogueBox.SetActive(true);
-    ShowLine();
-}
+    // Novo método — avança automaticamente sem precisar de clique
+    public IEnumerator PlayDialogueAuto(DialogueData data, float delayBetweenLines)
+    {
+        StartDialogue(data);
+        yield return null;
 
-private void ShowLine()
+        while (_isDialogueActive)
+        {
+            // Espera o texto terminar de digitar
+            yield return new WaitUntil(() => !isTyping);
+            yield return new WaitForSeconds(delayBetweenLines);
+            if (_isDialogueActive)
+                NextLine();
+        }
+    }
+
+    private void ShowLine()
     {
         if (currentDialogueData == null || currentLine >= currentDialogueData.dialogueLines.Length)
         {
@@ -113,80 +119,48 @@ private void ShowLine()
             return;
         }
 
-        // Pega a linha atual
         DialogueData.DialogueLine lineInfo = currentDialogueData.dialogueLines[currentLine];
-        
-        // Busca o perfil completo do personagem no Banco de Dados automaticamente
         CharacterDatabase.CharacterProfile profile = characterDatabase.GetProfile(lineInfo.speaker);
         string speakerName = profile.displayName;
         Sprite speakerPortrait = profile.defaultPortrait;
 
-        // CONFIGURAÇÃO DE CORES PARA FOCO/DESFOCO
         Color corFoco = Color.white; 
         Color corSemFoco = new Color(0.35f, 0.35f, 0.35f, 1f); 
 
-        // =========================================================================
-        // NOVA ADIÇÃO: LÓGICA PARA FALA DUPLA EM UNÍSSONO (NOAH E EMILY JUNTOS)
-        // =========================================================================
         if (lineInfo.speaker == CharacterDatabase.CharacterType.Ambos)
         {
-            // 1. Ativa as duas caixas de nome ao mesmo tempo na tela!
             groupNameLeft.SetActive(true);
             groupNameRight.SetActive(true);
-
-            // 2. Força o nome de cada um no seu devido lado para ficar organizado
             textNameLeft.text = "Noah";
             textNameRight.text = "Emily";
-
-            // 3. Dá FOCO TOTAL (Cor branca) para os dois retratos na tela simultaneamente
             if (portraitLeft != null && portraitLeft.gameObject.activeSelf) portraitLeft.color = corFoco;
             if (portraitRight != null && portraitRight.gameObject.activeSelf) portraitRight.color = corFoco;
-
-            // Se for a Emily fantasma, garante que a altura do retrato dela resete para o padrão
             if (portraitRight != null)
-            {
                 portraitRight.rectTransform.anchoredPosition = new Vector2(portraitRight.rectTransform.anchoredPosition.x, originalPortraitRightY);
-            }
         }
-        // =========================================================================
-        // RESTO DO CÓDIGO PADRÃO ( Noah / Outros )
-        // =========================================================================
         else if (lineInfo.speaker == CharacterDatabase.CharacterType.Noah)
         {
-            // Ativa e destaca o lado esquerdo (Protagonista)
             groupNameLeft.SetActive(true);
             groupNameRight.SetActive(false);
             textNameLeft.text = speakerName;
-
-            // Atualiza o Retrato da Esquerda e dá FOCO
             UpdatePortrait(portraitLeft, speakerPortrait);
             if (portraitLeft != null) portraitLeft.color = corFoco;
-
-            // Tira o foco do Retrato da Direita (se houver alguma imagem lá)
             if (portraitRight != null && portraitRight.sprite != null) 
                 portraitRight.color = corSemFoco;
         }
         else
         {
-            // Ativa e destaca o lado direito ( Claire / Emily / Grace / Atendente )
             groupNameLeft.SetActive(false);
             groupNameRight.SetActive(true);
             textNameRight.text = speakerName;
-
-            // Atualiza o Retrato da Direita e dá FOCO
             UpdatePortrait(portraitRight, speakerPortrait);
             if (portraitRight != null) portraitRight.color = corFoco;
-
-            // Tira o foco do Retrato da Esquerda
             if (portraitLeft != null && portraitLeft.sprite != null) 
                 portraitLeft.color = corSemFoco;
 
-            // --- LÓGICA CORRIGIDA E SEGURA DE POSICIONAMENTO ---
             if (portraitRight != null)
             {
                 portraitRight.rectTransform.localScale = new Vector3(1f, 1f, 1f);
-
-                // Apenas SE for a Claire nós alteramos a altura do RectTransform
                 if (lineInfo.speaker.ToString() == "Claire")
                 {
                     float novaAltura = originalPortraitRightY - 35f; 
@@ -199,7 +173,6 @@ private void ShowLine()
             }
         }
         
-        // Digitação do Texto
         StopBlinking();
         StartCoroutine(TypeSentence(lineInfo.sentence));
     }
@@ -207,7 +180,6 @@ private void ShowLine()
     private void UpdatePortrait(Image portraitImage, Sprite characterSprite)
     {
         if (portraitImage == null) return;
-
         if (characterSprite != null)
         {
             portraitImage.gameObject.SetActive(true);
@@ -215,7 +187,6 @@ private void ShowLine()
         }
         else
         {
-            // Se não colocarmos nenhuma foto no arquivo, o retrato daquele lado some
             portraitImage.gameObject.SetActive(false);
         }
     }
@@ -233,7 +204,6 @@ private void ShowLine()
         StartBlinking();
     }
 
-    // Gerenciamento do Indicador de Avanço Piscante
     private void StartBlinking()
     {
         if (nextTextIndicator != null)
@@ -255,13 +225,9 @@ private void ShowLine()
         {
             CanvasGroup group = nextTextIndicator.GetComponent<CanvasGroup>();
             if (group != null)
-            {
                 group.alpha = group.alpha == 1f ? 0f : 1f;
-            }
             else
-            {
                 nextTextIndicator.SetActive(!nextTextIndicator.activeSelf);
-            }
             yield return new WaitForSeconds(blinkSpeed);
         }
     }
@@ -270,23 +236,18 @@ private void ShowLine()
     {
         currentLine++;
         if (currentLine < currentDialogueData.dialogueLines.Length) 
-        { 
             ShowLine(); 
-        }
         else 
-        { 
             EndDialogue(); 
-        }
     }
 
     private void EndDialogue()
     {
-         _isDialogueActive = false;
+        _isDialogueActive = false;
         StopBlinking();
         if (dialogueBox != null) dialogueBox.SetActive(false);
         if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
         if (portraitRight != null) portraitRight.gameObject.SetActive(false);
-
         OnDialogueEnded?.Invoke();
     }
 }

@@ -24,7 +24,7 @@ public class AccidentFlashback : MonoBehaviour
     [Header("Configurações")]
     public float triggerDistanceEntrada = 4f;
     public float triggerDistanceFlashback = 5f;
-    public string nextSceneName = "Scene_Beco";
+    public string nextSceneName = "Scene_Alley";
 
     private bool entradaTriggered = false;
     private bool flashbackTriggered = false;
@@ -34,7 +34,6 @@ public class AccidentFlashback : MonoBehaviour
     {
         playerMovement = player.GetComponent<PlayerMovement>();
 
-        // Família aparece junto com a cena
         if (familyGroup != null)
             familyGroup.SetActive(true);
     }
@@ -86,6 +85,14 @@ public class AccidentFlashback : MonoBehaviour
         yield return StartCoroutine(blinkTransition.FadeToBlack());
 
         yield return new WaitForSeconds(1f);
+
+        // Marca que está voltando do flashback para o beco
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.accidentVisit = 2;
+            GameManager.Instance.returningFromFlashback = true;
+        }
+
         UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
     }
 

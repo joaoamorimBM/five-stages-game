@@ -109,23 +109,22 @@ public class AccidentScene : MonoBehaviour
     }
 
     private IEnumerator Blink3()
-    {
-        player.GetComponent<PlayerMovement>().SetMovementLocked(true);
+{
+    player.GetComponent<PlayerMovement>().SetMovementLocked(true);
 
-        yield return StartCoroutine(blinkTransition.FadeToBlack());
+    yield return StartCoroutine(blinkTransition.FadeToBlack());
 
-        yield return new WaitForSeconds(0.8f);
+    yield return new WaitForSeconds(0.8f);
 
-        yield return null;
-        DialogueManager.Instance.StartDialogue(dialogoEmily);
-        yield return null;
-        yield return new WaitUntil(() => !DialogueManager.Instance.isDialogueActive);
+    Debug.Log("Iniciando dialogo Emily...");
+    yield return StartCoroutine(DialogueManager.Instance.PlayDialogueAuto(dialogoEmily, 3f));
+    Debug.Log("Dialogo Emily terminou!");
 
-        // Atualiza visita para 2 antes de ir para o beco
-        if (GameManager.Instance != null)
-            GameManager.Instance.accidentVisit = 2;
+    if (GameManager.Instance != null)
+        GameManager.Instance.accidentVisit = 2;
 
-        yield return new WaitForSeconds(1f);
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Scene_Alley");
-    }
+    yield return new WaitForSeconds(1f);
+    Debug.Log("Carregando Scene_Alley...");
+    UnityEngine.SceneManagement.SceneManager.LoadScene("Scene_Alley");
+}
 }
