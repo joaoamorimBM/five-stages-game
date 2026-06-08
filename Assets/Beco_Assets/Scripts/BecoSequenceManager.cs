@@ -18,7 +18,6 @@ public class BecoSequenceManager : MonoBehaviour
 
     [Header("Dados de Diálogo")]
     [SerializeField] private DialogueData dialogoGato;          
-    [SerializeField] private DialogueData memoriaClaireDialogue; 
     [SerializeField] private DialogueData noahReacaoDialogue;
     [SerializeField] private DialogueData dialogoAntesFlashback;
     [SerializeField] private DialogueData dialogoPosFlashback;   
@@ -43,6 +42,9 @@ public class BecoSequenceManager : MonoBehaviour
     [Header("Configurações do Trigger do Gato")]
     [SerializeField] private float distanciaAtivacaoGato = 4f;
 
+    [Header("Efeitos de Raiva")]
+    [SerializeField] private AlleyIntroManager alleyIntroManager;
+
     private bool _dialogoEmAndamento = false;
 
     private void OnEnable() => DialogueManager.OnDialogueEnded += NotificarFimDialogo;
@@ -64,21 +66,16 @@ public class BecoSequenceManager : MonoBehaviour
         CharacterController playerCC = noahTransform.GetComponent<CharacterController>();
 
         if (playerMovement != null)
-            playerMovement.SetMovementLocked(false); // Player anda livremente até o gato
-
-        Quaternion rotacaoOriginalCamera = noahCamera.transform.localRotation;
+            playerMovement.SetMovementLocked(false);
 
         // --- PARTE 1: ESPERA O PLAYER CHEGAR PERTO DO GATO ---
-        Debug.Log("Esperando player chegar perto do gato...");
         yield return new WaitUntil(() =>
             gatoPlaceholder != null &&
             Vector3.Distance(noahTransform.position, gatoPlaceholder.transform.position) <= distanciaAtivacaoGato
         );
 
-        Debug.Log("Player chegou perto do gato!");
         yield return new WaitForSeconds(0.5f);
 
-        // Trava o player para a cutscene
         if (playerMovement != null)
             playerMovement.SetMovementLocked(true);
 
@@ -91,6 +88,10 @@ public class BecoSequenceManager : MonoBehaviour
         if (gatoScript != null)
             gatoScript.StartCatEscape();
 
+        // Inicia efeitos de raiva enquanto o gato foge
+        if (alleyIntroManager != null)
+            alleyIntroManager.StartAngerBuild();
+
         while (gatoPlaceholder.activeSelf)
         {
             Vector3 direcaoOlharGato = (gatoPlaceholder.transform.position - noahCamera.transform.position).normalized;
@@ -99,7 +100,7 @@ public class BecoSequenceManager : MonoBehaviour
             yield return null;
         }
 
-        // Retorna a câmera suavemente para a frente do Noah
+        // Retorna câmera para frente
         float tempoManeio = 0f;
         while (tempoManeio < 1f)
         {
@@ -115,19 +116,8 @@ public class BecoSequenceManager : MonoBehaviour
             playerMovement.ForceRotation(noahTransform.eulerAngles.y, anguloXAtual);
         }
 
-        // --- PARTE 4: PROMPT DA PULSEIRA ---
-        Debug.Log("Aperte E para olhar a pulseira...");
-        bool apertouE = false;
-        while (!apertouE)
-        {
-            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-                apertouE = true;
-            yield return null;
-        }
-
-        _dialogoEmAndamento = true;
-        DialogueManager.Instance.StartDialogue(memoriaClaireDialogue);
-        yield return new WaitUntil(() => !_dialogoEmAndamento);
+        // --- PARTE 4: AGUARDA 3 SEGUNDOS ---
+        yield return new WaitForSeconds(3f);
 
         // --- PARTE 5: ENCARAR A LATA ---
         float tempoOlharLata = 0f;
@@ -151,7 +141,10 @@ public class BecoSequenceManager : MonoBehaviour
         DialogueManager.Instance.StartDialogue(noahReacaoDialogue);
         yield return new WaitUntil(() => !_dialogoEmAndamento);
 
-        // --- PARTE 6: CHUTE FÍSICO ---
+        // --- PARTE 6: CHUTE FÍSICO — para os efeitos de raiva ---
+        if (alleyIntroManager != null)
+            alleyIntroManager.StopAngerEffects();
+
         if (lataLixoRb != null)
         {
             if (sfxSource != null && somChuteLata != null)
@@ -172,8 +165,6 @@ public class BecoSequenceManager : MonoBehaviour
         yield return new WaitForSeconds(1.5f);
 
         // --- PARTE 6.5: NOAH CAMINHA ATÉ O FINAL DO BECO ---
-        Debug.Log("Noah começando a caminhar sozinho até o final do beco...");
-
         for (int i = 0; i < caminhoAteFinalBeco.Length; i++)
         {
             Transform pontoAtual = caminhoAteFinalBeco[i];
@@ -230,8 +221,16 @@ public class BecoSequenceManager : MonoBehaviour
         DialogueManager.Instance.StartDialogue(dialogoAntesFlashback);
         yield return new WaitUntil(() => !_dialogoEmAndamento);
 
+        // Salva posições antes do flashback
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.noahPositionBeforeFlashback = noahTransform.position;
+            GameManager.Instance.noahRotationBeforeFlashback = noahTransform.rotation;
+            GameManager.Instance.emilyPositionBeforeFlashback = emilyPrefab.transform.position;
+            GameManager.Instance.emilyRotationBeforeFlashback = emilyPrefab.transform.rotation;
+        }
+
         // --- PARTE 10: TRANSIÇÃO PARA O FLASHBACK ---
-        Debug.Log("Fim do Bloco 1. Transição do Flashback liberada aqui!");
         DispararTransiciaoFlashback();
     }
 
@@ -259,13 +258,38 @@ public class BecoSequenceManager : MonoBehaviour
 
     private IEnumerator SequenciaPosFlashbackRoutine()
     {
-        Debug.Log("Noah voltou do flashback. Rodando o diálogo final de aceitação.");
+        PlayerMovement playerMovement = noahTransform.GetComponent<PlayerMovement>();
+
+        if (GameManager.Instance != null)
+        {
+            CharacterController cc = noahTransform.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+            noahTransform.position = GameManager.Instance.noahPositionBeforeFlashback;
+            noahTransform.rotation = GameManager.Instance.noahRotationBeforeFlashback;
+            if (cc != null) cc.enabled = true;
+
+            if (emilyPrefab != null)
+            {
+                emilyPrefab.SetActive(true);
+                emilyPrefab.transform.position = GameManager.Instance.emilyPositionBeforeFlashback;
+                emilyPrefab.transform.rotation = GameManager.Instance.emilyRotationBeforeFlashback;
+            }
+
+            if (pontoOlharEmily != null && playerMovement != null)
+            {
+                Vector3 direcao = (pontoOlharEmily.position - noahCamera.transform.position).normalized;
+                direcao.y = 0;
+                float yAngle = Quaternion.LookRotation(direcao).eulerAngles.y;
+                playerMovement.ForceRotation(yAngle, 0f);
+            }
+        }
+
+        yield return new WaitForSeconds(0.5f);
 
         _dialogoEmAndamento = true;
         DialogueManager.Instance.StartDialogue(dialogoPosFlashback);
         yield return new WaitUntil(() => !_dialogoEmAndamento);
 
-        PlayerMovement playerMovement = noahTransform.GetComponent<PlayerMovement>();
         if (playerMovement != null)
         {
             float anguloXAtual = noahCamera.transform.localEulerAngles.x;
@@ -274,6 +298,13 @@ public class BecoSequenceManager : MonoBehaviour
             playerMovement.SetMovementLocked(false);
         }
 
-        Debug.Log("Fase do Beco Finalizada com Sucesso!");
+                        if (GameManager.Instance != null)
+            GameManager.Instance.playFinalCutscene = true;
+
+        BlinkTransition blink = FindObjectOfType<BlinkTransition>();
+        if (blink != null)
+            yield return StartCoroutine(blink.FadeToBlack());
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Scene_House");
     }
 }

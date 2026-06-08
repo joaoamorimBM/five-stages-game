@@ -35,10 +35,10 @@ public class BakeryAnxiety : MonoBehaviour
     private bool sequenceStarted = false;
     private bool zumbidoStarted = false;
     private bool anxietyBuildStarted = false;
+    private bool sequenceEnding = false; // flag para bloquear o OnDialogueEnded no final
 
     void Start()
     {
-        // Garante que ao chegar na padaria o acidente sempre começa pela visita 1
         if (GameManager.Instance != null)
             GameManager.Instance.accidentVisit = 1;
 
@@ -65,6 +65,9 @@ public class BakeryAnxiety : MonoBehaviour
 
     private void OnDialogueEnded()
     {
+        // Não volta a trilha se a sequência final já começou
+        if (sequenceEnding) return;
+
         if (trilha != null)
             StartCoroutine(FadeTrilha(trilha.volume, volumeTrilhaNormal, 1f));
     }
@@ -107,6 +110,9 @@ public class BakeryAnxiety : MonoBehaviour
         if (respiracao != null) respiracao.Stop();
         if (ansiedade != null) ansiedade.Stop();
 
+        // Marca que a sequência de saída começou — bloqueia o OnDialogueEnded
+        sequenceEnding = true;
+
         if (trilha != null) StartCoroutine(FadeTrilha(trilha.volume, 0f, 1f));
         if (chuvaAmbiente != null) StartCoroutine(FadeAudio(chuvaAmbiente, chuvaAmbiente.volume, 0f, 1f));
 
@@ -128,22 +134,12 @@ public class BakeryAnxiety : MonoBehaviour
         if (corrida != null) corrida.Stop();
 
         yield return new WaitForSeconds(0.3f);
-        Debug.Log("Iniciando dialogo Grace...");
         yield return StartCoroutine(DialogueManager.Instance.PlayDialogueAuto(dialogoGraceFinal, 3f));
-        Debug.Log("Dialogo Grace terminou!");
 
         if (GameManager.Instance != null)
             GameManager.Instance.accidentVisit = 1;
 
         yield return new WaitForSeconds(2f);
-        Debug.Log("Carregando Acidente_Scene...");
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Acidente_Scene");
-
-        if (GameManager.Instance != null)
-            GameManager.Instance.accidentVisit = 1;
-
-        yield return new WaitForSeconds(2f);
-        Debug.Log("Carregando Acidente_Scene...");
         UnityEngine.SceneManagement.SceneManager.LoadScene("Acidente_Scene");
     }
 

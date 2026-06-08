@@ -7,6 +7,14 @@ public class GameManager : MonoBehaviour
     public int accidentVisit = 1;
     public bool returningFromFlashback = false;
 
+    public bool playFinalCutscene = false;
+
+    // Posições salvas antes do flashback
+    public Vector3 noahPositionBeforeFlashback;
+    public Quaternion noahRotationBeforeFlashback;
+    public Vector3 emilyPositionBeforeFlashback;
+    public Quaternion emilyRotationBeforeFlashback;
+
     void Awake()
     {
         if (Instance == null)
