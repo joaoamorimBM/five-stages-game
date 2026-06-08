@@ -32,14 +32,16 @@ public class BecoSequenceManager : MonoBehaviour
     [Header("Física da Tampa")]
     [SerializeField] private Rigidbody tampaLixoRb;
 
-    // --- ADICIONE AS REFERÊNCIAS DOS SEUS SCRIPTS DE CONTROLE AQUI ---
     [Header("Scripts do Player para Desativar")]
-    [SerializeField] private MonoBehaviour scriptMovimentacaoPlayer; // Arraste o script de andar do Noah
-    [SerializeField] private MonoBehaviour scriptRotacaoCamera;      // Arraste o script de girar a câmera/mouse (se houver)
+    [SerializeField] private MonoBehaviour scriptMovimentacaoPlayer;
+    [SerializeField] private MonoBehaviour scriptRotacaoCamera;
 
     [Header("Parte 2: Emily e Flashback")]
     [SerializeField] private GameObject emilyPrefab;
     [SerializeField] private Transform pontoOlharEmily;
+
+    [Header("Configurações do Trigger do Gato")]
+    [SerializeField] private float distanciaAtivacaoGato = 4f;
 
     private bool _dialogoEmAndamento = false;
 
@@ -56,79 +58,44 @@ public class BecoSequenceManager : MonoBehaviour
         _dialogoEmAndamento = false;
     }
 
-private IEnumerator SequenciaBecoRoutine()
+    private IEnumerator SequenciaBecoRoutine()
     {
-        // --- PARTE 1: TRAVA CONTROLES USANDO O SEU SCRIPT NATIVO ---
         PlayerMovement playerMovement = noahTransform.GetComponent<PlayerMovement>();
         CharacterController playerCC = noahTransform.GetComponent<CharacterController>();
 
         if (playerMovement != null)
-        {
-            // Usa a sua função que pausa animações e desativa o script de forma limpa!
-            playerMovement.SetMovementLocked(true); 
-        }
+            playerMovement.SetMovementLocked(false); // Player anda livremente até o gato
 
         Quaternion rotacaoOriginalCamera = noahCamera.transform.localRotation;
 
-        // Percorre cada curva do beco de forma natural
-        for (int i = 0; i < caminhoCaminhadaNoah.Length; i++)
-        {
-            Transform pontoAtual = caminhoCaminhadaNoah[i];
-            if (pontoAtual == null) continue;
+        // --- PARTE 1: ESPERA O PLAYER CHEGAR PERTO DO GATO ---
+        Debug.Log("Esperando player chegar perto do gato...");
+        yield return new WaitUntil(() =>
+            gatoPlaceholder != null &&
+            Vector3.Distance(noahTransform.position, gatoPlaceholder.transform.position) <= distanciaAtivacaoGato
+        );
 
-            while (Vector3.Distance(noahTransform.position, pontoAtual.position) > 0.3f)
-            {
-                // 1. Calcula a direção para onde ele deve andar (física)
-                Vector3 direcaoPonto = (pontoAtual.position - noahTransform.position).normalized;
-                
-                if (playerCC != null)
-                {
-                    playerCC.Move(direcaoPonto * velocidadeCaminhadaNoah * Time.deltaTime);
-                }
-                else
-                {
-                    noahTransform.position = Vector3.MoveTowards(noahTransform.position, pontoAtual.position, velocidadeCaminhadaNoah * Time.deltaTime);
-                }
-                
-                // 2. CORREÇÃO DO OMBRO: Força o CORPO do Noah a ficar sempre de frente para o gato (apenas rotação Y)
-                Vector3 direcaoGatoHorizontal = (gatoPlaceholder.transform.position - noahTransform.position).normalized;
-                direcaoGatoHorizontal.y = 0; // Mantém o corpo reto, sem inclinar para cima/baixo
-                
-                if (direcaoGatoHorizontal != Vector3.zero)
-                {
-                    noahTransform.rotation = Quaternion.Slerp(noahTransform.rotation, Quaternion.LookRotation(direcaoGatoHorizontal), 8f * Time.deltaTime);
-                }
+        Debug.Log("Player chegou perto do gato!");
+        yield return new WaitForSeconds(0.5f);
 
-                // 3. FOCO DA CÂMERA: A câmera (filha) cuida apenas do ajuste fino de altura/olhar
-                Vector3 direcaoCameraGato = (gatoPlaceholder.transform.position - noahCamera.transform.position).normalized;
-                if (direcaoCameraGato != Vector3.zero)
-                {
-                    noahCamera.transform.rotation = Quaternion.LookRotation(direcaoCameraGato);
-                }
-
-                yield return null;
-            }
-        }
+        // Trava o player para a cutscene
+        if (playerMovement != null)
+            playerMovement.SetMovementLocked(true);
 
         // --- PARTE 2: DIÁLOGO COM O GATO ---
         _dialogoEmAndamento = true;
         DialogueManager.Instance.StartDialogue(dialogoGato);
-        yield return new WaitUntil(() => !_dialogoEmAndamento); 
+        yield return new WaitUntil(() => !_dialogoEmAndamento);
 
-        // --- PARTE 3: GATO FUGIND0 E CÂMERA SEGUINDO ---
+        // --- PARTE 3: GATO FUGINDO E CÂMERA SEGUINDO ---
         if (gatoScript != null)
-        {
-            gatoScript.StartCatEscape(); 
-        }
+            gatoScript.StartCatEscape();
 
         while (gatoPlaceholder.activeSelf)
         {
             Vector3 direcaoOlharGato = (gatoPlaceholder.transform.position - noahCamera.transform.position).normalized;
             if (direcaoOlharGato != Vector3.zero)
-            {
-                // Foco absoluto e cravado no gato enquanto ele corre para o buraco
                 noahCamera.transform.rotation = Quaternion.LookRotation(direcaoOlharGato);
-            }
             yield return null;
         }
 
@@ -141,14 +108,10 @@ private IEnumerator SequenciaBecoRoutine()
             yield return null;
         }
 
-        // Sincroniza a variável interna do seu PlayerMovement para o mouse não dar tranco no final da cutscene
         if (playerMovement != null)
         {
-            // Atualiza o rotX interno com base na rotação atual que a cutscene deixou a câmera
             float anguloXAtual = noahCamera.transform.localEulerAngles.x;
-            // Converte ângulos de 0-360 para o padrão -180 a 180 que o Mathf.Clamp usa
             if (anguloXAtual > 180) anguloXAtual -= 360;
-            
             playerMovement.ForceRotation(noahTransform.eulerAngles.y, anguloXAtual);
         }
 
@@ -158,44 +121,37 @@ private IEnumerator SequenciaBecoRoutine()
         while (!apertouE)
         {
             if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-            {
                 apertouE = true;
-            }
             yield return null;
         }
 
-        // Mostra a memória visual da Claire sorrindo na direita
         _dialogoEmAndamento = true;
         DialogueManager.Instance.StartDialogue(memoriaClaireDialogue);
         yield return new WaitUntil(() => !_dialogoEmAndamento);
 
-// --- PARTE 5: ENCARAR A LATA COM O CORPO INTEIRO (CORREÇÃO DO OMBRO) ---
+        // --- PARTE 5: ENCARAR A LATA ---
         float tempoOlharLata = 0f;
         while (tempoOlharLata < 0.8f)
         {
             tempoOlharLata += Time.deltaTime;
-            
+
             Vector3 direcaoLataHorizontal = (lataLixoRb.transform.position - noahTransform.position).normalized;
             direcaoLataHorizontal.y = 0;
             if (direcaoLataHorizontal != Vector3.zero)
-            {
                 noahTransform.rotation = Quaternion.Slerp(noahTransform.rotation, Quaternion.LookRotation(direcaoLataHorizontal), 5f * Time.deltaTime);
-            }
 
             Vector3 direcaoCameraLata = (lataLixoRb.transform.position - noahCamera.transform.position).normalized;
             if (direcaoCameraLata != Vector3.zero)
-            {
                 noahCamera.transform.rotation = Quaternion.Slerp(noahCamera.transform.rotation, Quaternion.LookRotation(direcaoCameraLata), 5f * Time.deltaTime);
-            }
+
             yield return null;
         }
 
-        // Noah grita "QUE MERDA!"
         _dialogoEmAndamento = true;
         DialogueManager.Instance.StartDialogue(noahReacaoDialogue);
         yield return new WaitUntil(() => !_dialogoEmAndamento);
 
-// --- PARTE 6: O CHUTE FÍSICO (LATA E TAMPA) ---
+        // --- PARTE 6: CHUTE FÍSICO ---
         if (lataLixoRb != null)
         {
             if (sfxSource != null && somChuteLata != null)
@@ -213,10 +169,9 @@ private IEnumerator SequenciaBecoRoutine()
             lataLixoRb.AddForce(direcaoChuteLata * forcaChute, ForceMode.Impulse);
         }
 
-        // Segura a câmera na lata voando por 1.5 segundos (pausa dramática da fúria)
-        yield return new WaitForSeconds(1.5f); 
+        yield return new WaitForSeconds(1.5f);
 
-        // --- PARTE 6.5: NOAH CAMINHA ATÉ O FINAL DO BECO SOZINHO ---
+        // --- PARTE 6.5: NOAH CAMINHA ATÉ O FINAL DO BECO ---
         Debug.Log("Noah começando a caminhar sozinho até o final do beco...");
 
         for (int i = 0; i < caminhoAteFinalBeco.Length; i++)
@@ -227,20 +182,15 @@ private IEnumerator SequenciaBecoRoutine()
             while (Vector3.Distance(noahTransform.position, pontoAtual.position) > 0.3f)
             {
                 Vector3 direcaoPonto = (pontoAtual.position - noahTransform.position).normalized;
-                
+
                 if (playerCC != null)
-                {
                     playerCC.Move(direcaoPonto * velocidadeCaminhadaNoah * Time.deltaTime);
-                }
                 else
-                {
                     noahTransform.position = Vector3.MoveTowards(noahTransform.position, pontoAtual.position, velocidadeCaminhadaNoah * Time.deltaTime);
-                }
-                
-                // O corpo e a cabeça/câmera focam na direção para onde ele está andando agora (olhando para frente normalmente)
+
                 if (direcaoPonto != Vector3.zero)
                 {
-                    direcaoPonto.y = 0; 
+                    direcaoPonto.y = 0;
                     noahTransform.rotation = Quaternion.Slerp(noahTransform.rotation, Quaternion.LookRotation(direcaoPonto), 6f * Time.deltaTime);
                     noahCamera.transform.rotation = Quaternion.Slerp(noahCamera.transform.rotation, Quaternion.LookRotation(direcaoPonto), 6f * Time.deltaTime);
                 }
@@ -249,27 +199,22 @@ private IEnumerator SequenciaBecoRoutine()
             }
         }
 
-        // --- PARTE 7: APARIÇÃO DA EMILY ATRÁS DO NOAH ---
-        // Noah chegou ao final do beco e para. A Emily surge nas costas dele.
+        // --- PARTE 7: APARIÇÃO DA EMILY ---
         if (emilyPrefab != null)
-        {
-            emilyPrefab.SetActive(true); // Ativa a Emily silenciosamente
-        }
+            emilyPrefab.SetActive(true);
 
-        yield return new WaitForSeconds(1.0f); // Tempo até ela chamar "Noah..."
+        yield return new WaitForSeconds(1.0f);
 
-        // --- PARTE 8: NOAH SE VIRA PARA A EMILY (CORPO E CÂMERA ALINHADOS) ---
+        // --- PARTE 8: NOAH SE VIRA PARA A EMILY ---
         float tempoViradaEmily = 0f;
         while (tempoViradaEmily < 1.2f)
         {
             tempoViradaEmily += Time.deltaTime;
-            
+
             Vector3 direcaoEmilyHorizontal = (emilyPrefab.transform.position - noahTransform.position).normalized;
             direcaoEmilyHorizontal.y = 0;
             if (direcaoEmilyHorizontal != Vector3.zero)
-            {
                 noahTransform.rotation = Quaternion.Slerp(noahTransform.rotation, Quaternion.LookRotation(direcaoEmilyHorizontal), 4f * Time.deltaTime);
-            }
 
             if (pontoOlharEmily != null)
             {
@@ -283,27 +228,30 @@ private IEnumerator SequenciaBecoRoutine()
         // --- PARTE 9: DIÁLOGO ANTES DO FLASHBACK ---
         _dialogoEmAndamento = true;
         DialogueManager.Instance.StartDialogue(dialogoAntesFlashback);
-        yield return new WaitUntil(() => !_dialogoEmAndamento); // Espera ler até "Era pra ter sido eu..."
+        yield return new WaitUntil(() => !_dialogoEmAndamento);
 
-        // --- PARTE 10: ESPAÇO DA TRANSIÇÃO (PRO OUTRO MEMBRO DO GRUPO) ---
+        // --- PARTE 10: TRANSIÇÃO PARA O FLASHBACK ---
         Debug.Log("Fim do Bloco 1. Transição do Flashback liberada aqui!");
         DispararTransiciaoFlashback();
     }
 
-    /// <summary>
-    /// ESPAÇO DO GRUPO: O membro responsável pela transição vai colocar o código dele aqui dentro!
-    /// Pode ser um SceneManager.LoadScene, ativação de animação de Fade, etc.
-    /// </summary>
     private void DispararTransiciaoFlashback()
     {
-        // EX: Seu amigo vai colocar algo como:
-        // FadeManager.Instance.FadeOutToScene("Cena_Estrada");
+        StartCoroutine(TransicaoParaFlashback());
     }
 
-    /// <summary>
-    /// MÉTODO PÚBLICO: Quando o flashback do acidente terminar lá na outra cena (ou cenário),
-    /// o script daquela cena só precisa chamar esta função para o Beco continuar de onde parou.
-    /// </summary>
+    private IEnumerator TransicaoParaFlashback()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.accidentVisit = 2;
+
+        BlinkTransition blink = FindObjectOfType<BlinkTransition>();
+        if (blink != null)
+            yield return StartCoroutine(blink.FadeToBlack());
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Acidente_Scene");
+    }
+
     public void RetornarDoFlashback()
     {
         StartCoroutine(SequenciaPosFlashbackRoutine());
@@ -313,21 +261,17 @@ private IEnumerator SequenciaBecoRoutine()
     {
         Debug.Log("Noah voltou do flashback. Rodando o diálogo final de aceitação.");
 
-        // --- PARTE 11: DIÁLOGO DE ENCERRAMENTO DO BECO ---
         _dialogoEmAndamento = true;
         DialogueManager.Instance.StartDialogue(dialogoPosFlashback);
-        yield return new WaitUntil(() => !_dialogoEmAndamento); // Espera o "Vamos pra casa."
+        yield return new WaitUntil(() => !_dialogoEmAndamento);
 
-        // --- PARTE 12: DEVOLVE O CONTROLE DE MOVIMENTAÇÃO SE QUISER ---
         PlayerMovement playerMovement = noahTransform.GetComponent<PlayerMovement>();
         if (playerMovement != null)
         {
-            // Sincroniza o mouse no ângulo atual da Emily para não dar tranco
             float anguloXAtual = noahCamera.transform.localEulerAngles.x;
             if (anguloXAtual > 180) anguloXAtual -= 360;
             playerMovement.ForceRotation(noahTransform.eulerAngles.y, anguloXAtual);
-
-            playerMovement.SetMovementLocked(false); // Libera o jogador na cena
+            playerMovement.SetMovementLocked(false);
         }
 
         Debug.Log("Fase do Beco Finalizada com Sucesso!");

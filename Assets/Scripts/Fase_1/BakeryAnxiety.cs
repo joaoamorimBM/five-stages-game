@@ -128,16 +128,22 @@ public class BakeryAnxiety : MonoBehaviour
         if (corrida != null) corrida.Stop();
 
         yield return new WaitForSeconds(0.3f);
-        yield return null;
-        DialogueManager.Instance.StartDialogue(dialogoGraceFinal);
-        yield return null;
-        yield return new WaitUntil(() => !DialogueManager.Instance.isDialogueActive);
+        Debug.Log("Iniciando dialogo Grace...");
+        yield return StartCoroutine(DialogueManager.Instance.PlayDialogueAuto(dialogoGraceFinal, 3f));
+        Debug.Log("Dialogo Grace terminou!");
 
-        // Garante visita 1 na cena do acidente
         if (GameManager.Instance != null)
             GameManager.Instance.accidentVisit = 1;
 
         yield return new WaitForSeconds(2f);
+        Debug.Log("Carregando Acidente_Scene...");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Acidente_Scene");
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.accidentVisit = 1;
+
+        yield return new WaitForSeconds(2f);
+        Debug.Log("Carregando Acidente_Scene...");
         UnityEngine.SceneManagement.SceneManager.LoadScene("Acidente_Scene");
     }
 
