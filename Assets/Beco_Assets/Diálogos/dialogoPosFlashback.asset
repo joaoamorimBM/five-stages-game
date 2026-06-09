@@ -13,21 +13,27 @@ MonoBehaviour:
   m_Name: dialogoPosFlashback
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   dialogueLines:
+  - speaker: 3
+    sentence: "Pensar que ela n\xE3o vai voltar..."
+  - speaker: 3
+    sentence: "Que nunca mais vou v\xEA-la ou ouvi-la."
+  - speaker: 3
+    sentence: "Isso me corr\xF3i por dentro."
+  - speaker: 3
+    sentence: Eu me sinto impotente.
   - speaker: 0
-    sentence: Ela morreu, Emily...
+    sentence: Eu sei, meu amor.
   - speaker: 0
-    sentence: "E n\xE3o foi culpa sua... nem minha..."
+    sentence: "N\xE3o sei como vamos passar por isso."
   - speaker: 0
-    sentence: Isso simplesmente aconteceu...
+    sentence: Mas eu espero que onde a Claire estiver...
   - speaker: 0
-    sentence: "Naquele dia n\xF3s morremos junto com ela..."
+    sentence: ela esteja nos vigiando.
   - speaker: 0
-    sentence: Mas continuamos respirando...
+    sentence: "Cuidando de n\xF3s."
   - speaker: 0
-    sentence: Precisamos viver por ela... Amar por ela... Sorrir por ela...
-  - speaker: 9
-    sentence: Precisamos nos despedir.
-  - speaker: 2
-    sentence: "Essa dor nunca vai parar... n\xE3o \xE9?"
+    sentence: Afinal, ainda estamos respirando.
+  - speaker: 3
+    sentence: Eu te amo, meu amor. Vamos passar por isso juntos.
   - speaker: 0
-    sentence: Sim... vamos pra casa.
+    sentence: "Tamb\xE9m te amo... vamos para casa."

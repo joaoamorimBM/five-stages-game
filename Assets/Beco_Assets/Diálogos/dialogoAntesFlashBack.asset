@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: dialogoAntesFlashBack
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   dialogueLines:
-  - speaker: 2
-    sentence: "Noah... ai est\xE1 voc\xEA."
-  - speaker: 0
+  - speaker: 3
+    sentence: Noah.. Finalmente te achei
+  - speaker: 1
     sentence: Emily... me desculpa... eu...
-  - speaker: 2
-    sentence: "Do\xED tanto... eu n\xE3o aguento..."
-  - speaker: 2
+  - speaker: 3
+    sentence: Eu sei.. doi tanto
+  - speaker: 3
     sentence: "Cada respira\xE7\xE3o, cada passo... tudo \xE9 mais dif\xEDcil..."
-  - speaker: 2
-    sentence: "Era pra ter sido eu, n\xE3o ela..."
+  - speaker: 3
+    sentence: Naquele dia... sinto que morri junto com ela
