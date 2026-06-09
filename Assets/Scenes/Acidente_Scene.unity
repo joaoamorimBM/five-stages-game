@@ -34775,7 +34775,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AccidentController
   accidentScene: {fileID: 1259295897}
   accidentFlashback: {fileID: 462200699}
-  forceVisit: 2
+  forceVisit: 0
 --- !u!4 &1668083743
 Transform:
   m_ObjectHideFlags: 0
