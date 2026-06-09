@@ -43,3 +43,6 @@ MonoBehaviour:
   - characterType: 9
     displayName: Noah e Emily
     defaultPortrait: {fileID: 0}
+  - characterType: 10
+    displayName: Noah
+    defaultPortrait: {fileID: 21300000, guid: 1a6c1169333314ef29c55722e3266e00, type: 3}
