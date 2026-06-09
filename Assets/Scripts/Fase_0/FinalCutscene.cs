@@ -25,6 +25,10 @@ public class FinalCutscene : MonoBehaviour
     [Header("Fade")]
     public UnityEngine.UI.Image fadeImage;
 
+    [Header("Próxima Cena (Dedicatória)")]
+    [Tooltip("Nome EXATO da cena que entra depois da cutscene. Precisa estar nas Build Settings.")]
+    public string proximaCena = "Dedicatoria_Scene";
+
     [Header("Teste")]
     public bool forcePlayInEditor = false;
 
@@ -92,7 +96,17 @@ public class FinalCutscene : MonoBehaviour
         yield return StartCoroutine(FadeScreen(0f, 1f, 2f));
 
         Debug.Log("Cutscene final concluída!");
-        // SceneManager.LoadScene("Credits");
+
+        // Já não precisamos mais tocar a cutscene de novo se voltar a essa cena.
+        if (GameManager.Instance != null)
+            GameManager.Instance.playFinalCutscene = false;
+
+        // --- VAI PARA A CENA DA DEDICATÓRIA ---
+        if (!string.IsNullOrEmpty(proximaCena))
+            SceneManager.LoadScene(proximaCena);
+        else
+            Debug.LogError("[FinalCutscene] 'proximaCena' está vazio! " +
+                           "Preencha com o nome da cena da dedicatória no Inspector.");
     }
 
     private IEnumerator MoveCamera()
