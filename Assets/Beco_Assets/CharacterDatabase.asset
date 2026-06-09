@@ -27,7 +27,7 @@ MonoBehaviour:
     defaultPortrait: {fileID: 21300000, guid: ef46383eb1cd74537963d149670c0fdd, type: 3}
   - characterType: 3
     displayName: Emily
-    defaultPortrait: {fileID: 21300000, guid: 8405f8b021e3242f691f2469a5e4aeed, type: 3}
+    defaultPortrait: {fileID: 21300000, guid: 01bbf52405b2d4edeb92d048ba994a34, type: 3}
   - characterType: 1
     displayName: Noah
     defaultPortrait: {fileID: 21300000, guid: ce839d48f5b1840f5965ddb23bf9ac42, type: 3}
