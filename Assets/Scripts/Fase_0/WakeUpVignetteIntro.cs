@@ -112,16 +112,28 @@ public class WakeUpStagesIntro : MonoBehaviour
         yield return AnimateDarknessAlpha(darknessOverlay.color.a, 1f, blinkTime);
         if (closedHold > 0f) yield return new WaitForSeconds(closedHold);
 
-        // 2) Enquanto ainda está preto, faz a vinheta sumir suavemente
+        // 2) Vinheta some suavemente
         if (disableVignetteOnFinal && vignetteOverlay != null)
         {
             float fromA = vignetteOverlay.color.a;
             yield return StartCoroutine(FadeImageAlpha(vignetteOverlay, fromA, 0f, vignetteFadeOutTime));
-            vignetteOverlay.gameObject.SetActive(false); // opcional, só pra “limpar”
+            vignetteOverlay.gameObject.SetActive(false);
         }
 
-        // 3) Agora abre total com visão já normal
-        yield return AnimateDarknessAlpha(1f, finalAlpha, blinkTime);
+        // 3) Abre os olhos DEVAGAR (3x mais lento que o blink normal)
+        yield return AnimateDarknessAlpha(1f, finalAlpha, blinkTime * 3f);
+
+        // 4) Some o botão enquanto vê o teto
+        wakeButton.gameObject.SetActive(false);
+
+        // 5) Pausa contemplativa olhando para o teto
+        yield return new WaitForSeconds(1.5f);
+
+        // 6) Fecha os olhos suavemente para transição
+        yield return AnimateDarknessAlpha(finalAlpha, 1f, 1.5f);
+
+        // 7) Pequena pausa com tela preta
+        yield return new WaitForSeconds(0.5f);
         // ============================================
 
         wakeButton.interactable = false;

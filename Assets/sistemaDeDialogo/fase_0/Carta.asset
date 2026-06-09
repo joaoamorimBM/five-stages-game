@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Carta
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   dialogueLines:
-  - speaker: 2
+  - speaker: 4
     sentence: '"Feliz dia dos Pais para o Melhor pai do mundooo!"'
-  - speaker: 2
+  - speaker: 4
     sentence: "\"Papai eu queria apenas agradecer por ser t\xE3o incr\xEDvel, batalhador
-      e companheiro para mim e para a mam\xE3e. \""
-  - speaker: 2
+      e companheiro para mim e para a mam\xE3e.\""
+  - speaker: 4
     sentence: '"Te amo muito muito muito muito muito muitooooo!"'
