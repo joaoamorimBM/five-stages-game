@@ -45,6 +45,10 @@ public class BecoSequenceManager : MonoBehaviour
     [Header("Efeitos de Raiva")]
     [SerializeField] private AlleyIntroManager alleyIntroManager;
 
+    [Header("Segurança Anti-Travamento")]
+    [Tooltip("Tempo máximo (s) esperando o gato terminar a fuga antes de forçar a continuação.")]
+    [SerializeField] private float tempoMaxFugaGato = 8f;
+
     private bool _dialogoEmAndamento = false;
 
     private void OnEnable() => DialogueManager.OnDialogueEnded += NotificarFimDialogo;
@@ -68,9 +72,19 @@ public class BecoSequenceManager : MonoBehaviour
         if (playerMovement != null)
             playerMovement.SetMovementLocked(false);
 
+        // Avisos claros se algo crítico não foi atribuído no Inspector.
+        if (gatoPlaceholder == null)
+            Debug.LogError("[BecoSequenceManager] 'gatoPlaceholder' NÃO está atribuído! " +
+                           "Reatribua o objeto do gato no Inspector.");
+        if (gatoScript == null)
+            Debug.LogError("[BecoSequenceManager] 'gatoScript' (CatBecoCutscene) NÃO está atribuído! " +
+                           "Arraste o componente CatBecoCutscene do gato para este campo.");
+
         // --- PARTE 1: ESPERA O PLAYER CHEGAR PERTO DO GATO ---
+        // Se gatoPlaceholder for null, a condição passa imediatamente (em vez de
+        // travar para sempre) — assim a cena nunca fica presa aqui.
         yield return new WaitUntil(() =>
-            gatoPlaceholder != null &&
+            gatoPlaceholder == null ||
             Vector3.Distance(noahTransform.position, gatoPlaceholder.transform.position) <= distanciaAtivacaoGato
         );
 
@@ -87,17 +101,34 @@ public class BecoSequenceManager : MonoBehaviour
         // --- PARTE 3: GATO FUGINDO E CÂMERA SEGUINDO ---
         if (gatoScript != null)
             gatoScript.StartCatEscape();
+        else
+            Debug.LogWarning("[BecoSequenceManager] gatoScript ausente — pulando a fuga do gato.");
 
         // Inicia efeitos de raiva enquanto o gato foge
         if (alleyIntroManager != null)
             alleyIntroManager.StartAngerBuild();
 
-        while (gatoPlaceholder.activeSelf)
+        // Câmera segue o gato ENQUANTO ele estiver ativo, mas com TIMEOUT.
+        // Se a fuga do gato travar (animação, root motion, waypoints, etc.),
+        // a cena continua sozinha em vez de congelar para sempre.
+        float tempoFuga = 0f;
+        while (gatoPlaceholder != null && gatoPlaceholder.activeSelf && tempoFuga < tempoMaxFugaGato)
         {
+            tempoFuga += Time.deltaTime;
+
             Vector3 direcaoOlharGato = (gatoPlaceholder.transform.position - noahCamera.transform.position).normalized;
             if (direcaoOlharGato != Vector3.zero)
                 noahCamera.transform.rotation = Quaternion.LookRotation(direcaoOlharGato);
             yield return null;
+        }
+
+        // Rede de segurança: garante que o gato suma para a cena prosseguir.
+        if (gatoPlaceholder != null && gatoPlaceholder.activeSelf)
+        {
+            Debug.LogWarning("[BecoSequenceManager] O gato não terminou a fuga a tempo. " +
+                             "Forçando desativação para continuar a sequência. " +
+                             "Confira os waypoints e o Animator do modelo do gato.");
+            gatoPlaceholder.SetActive(false);
         }
 
         // Retorna câmera para frente
@@ -298,7 +329,7 @@ public class BecoSequenceManager : MonoBehaviour
             playerMovement.SetMovementLocked(false);
         }
 
-                        if (GameManager.Instance != null)
+        if (GameManager.Instance != null)
             GameManager.Instance.playFinalCutscene = true;
 
         BlinkTransition blink = FindObjectOfType<BlinkTransition>();
