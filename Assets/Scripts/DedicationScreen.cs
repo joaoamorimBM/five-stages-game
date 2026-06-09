@@ -22,19 +22,18 @@ public class DedicationScreen : MonoBehaviour
     [Tooltip("Nome EXATO da cena do menu inicial (precisa estar nas Build Settings).")]
     [SerializeField] private string menuSceneName = "Scene_MainMenu";
 
-    [Header("Tempos (segundos)")]
-    [SerializeField] private float fadeInTexto = 2f;
-    [SerializeField] private float seguraTexto = 3f;
-    [SerializeField] private float fadeOutTexto = 1.5f;
-    [SerializeField] private float intervalo = 0.5f;
-    [SerializeField] private float fadeInFoto = 2f;
-    [SerializeField] private float seguraFoto = 4f;
-    [SerializeField] private float fadeOutFinal = 2f;
-    // Total padrão ≈ 15s
-
     [Header("Opcional")]
     [Tooltip("Permite pular a dedicatória apertando Espaço/Enter/clique.")]
     [SerializeField] private bool permitirPular = false;
+
+    // -----------------------------------------------------------------
+    // TEMPOS DA SEQUÊNCIA (em segundos) — mude aqui se quiser ajustar.
+    // -----------------------------------------------------------------
+    private const float FADE_IN_TEXTO   = 1.5f; // quão devagar o texto aparece
+    private const float ESPERA_ANTES_FOTO = 3f; // espera entre o texto e a foto
+    private const float FADE_IN_FOTO    = 1.5f; // quão devagar a foto aparece
+    private const float SEGURA_JUNTOS   = 5f;   // texto + foto juntos na tela
+    private const float FADE_OUT_FINAL  = 2f;   // quão devagar tudo escurece
 
     private bool _jaSaiu = false;
 
@@ -66,22 +65,23 @@ public class DedicationScreen : MonoBehaviour
 
     private IEnumerator Sequencia()
     {
-        // 1) Texto da dedicatória entra
-        yield return Fade(grupoTexto, 0f, 1f, fadeInTexto);
-        yield return new WaitForSeconds(seguraTexto);
+        // 1) Título (texto) entra em cima
+        yield return Fade(grupoTexto, 0f, 1f, FADE_IN_TEXTO);
 
-        // 2) Texto sai
-        yield return Fade(grupoTexto, 1f, 0f, fadeOutTexto);
-        yield return new WaitForSeconds(intervalo);
+        // 2) Espera 3 segundos com o texto na tela
+        yield return new WaitForSeconds(ESPERA_ANTES_FOTO);
 
-        // 3) Foto do gato entra
-        yield return Fade(grupoFoto, 0f, 1f, fadeInFoto);
-        yield return new WaitForSeconds(seguraFoto);
+        // 3) Foto do gato entra embaixo (o título continua visível)
+        yield return Fade(grupoFoto, 0f, 1f, FADE_IN_FOTO);
 
-        // 4) Tudo escurece
-        yield return Fade(grupoFoto, 1f, 0f, fadeOutFinal);
+        // 4) Texto + foto ficam juntos na tela por 5 segundos
+        yield return new WaitForSeconds(SEGURA_JUNTOS);
 
-        // 5) Volta ao menu
+        // 5) Os dois somem juntos (ao mesmo tempo)
+        StartCoroutine(Fade(grupoTexto, 1f, 0f, FADE_OUT_FINAL));
+        yield return Fade(grupoFoto, 1f, 0f, FADE_OUT_FINAL);
+
+        // 6) Volta ao menu
         IrParaMenu();
     }
 
