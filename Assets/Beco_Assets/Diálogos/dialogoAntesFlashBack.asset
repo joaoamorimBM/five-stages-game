@@ -12,14 +12,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: dialogoAntesFlashBack
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Emily encontra Noah no beco"
   dialogueLines:
   - speaker: 3
-    sentence: Noah.. Finalmente te achei
+    sentence: "Noah.. Finalmente te achei"
+    choices: []
+    choiceSpeaker: 0
   - speaker: 1
-    sentence: Emily... me desculpa... eu...
+    sentence: "Emily... me desculpa... eu..."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 3
-    sentence: Eu sei.. doi tanto
+    sentence: "Eu sei.. doi tanto"
+    choices: []
+    choiceSpeaker: 0
   - speaker: 3
     sentence: "Cada respira\xE7\xE3o, cada passo... tudo \xE9 mais dif\xEDcil..."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 3
-    sentence: Naquele dia... sinto que morri junto com ela
+    sentence: "Naquele dia... sinto que morri junto com ela"
+    choices:
+    - text: "Eu tamb\xE9m. \xC0s vezes acho que n\xE3o vou aguentar."
+      stage: 3
+      response: ""
+    - text: "A culpa \xE9 minha. Eu devia ter protegido ela."
+      stage: 2
+      response: ""
+    - text: "N\xE3o fala isso. A gente ainda tem um ao outro."
+      stage: 4
+      response: ""
+    choiceSpeaker: 1

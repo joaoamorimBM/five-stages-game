@@ -12,8 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: Celular
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Celular"
   dialogueLines:
   - speaker: 0
     sentence: "\"Previs\xE3o do tempo: Chuva forte\""
-  - speaker: 0
-    sentence: "Ah que \xF3timo. Mais um ponto negativo na minha vida de merda"
+    choices:
+    - text: "Ah, que \xF3timo. Mais um ponto negativo na minha vida de merda."
+      stage: 1
+      response: ""
+    - text: "Tanto faz. Nada muda mesmo."
+      stage: 3
+      response: ""
+    - text: "Melhor levar um guarda-chuva."
+      stage: 4
+      response: ""
+    choiceSpeaker: 0

@@ -12,28 +12,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: dialogoPosFlashback
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Conversa com a Emily depois do flashback"
   dialogueLines:
   - speaker: 3
     sentence: "Pensar que ela n\xE3o vai voltar..."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 3
     sentence: "Que nunca mais vou v\xEA-la ou ouvi-la."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 3
     sentence: "Isso me corr\xF3i por dentro."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 3
-    sentence: Eu me sinto impotente.
-  - speaker: 0
-    sentence: Eu sei, meu amor.
+    sentence: "Eu me sinto impotente."
+    choices:
+    - text: "Eu sei, meu amor. Eu tamb\xE9m."
+      stage: 4
+      response: ""
+    - text: "Se a gente tivesse chegado antes... talvez ela estivesse aqui."
+      stage: 2
+      response: ""
+    - text: "N\xE3o era pra ter sido assim! N\xE3o \xE9 justo!"
+      stage: 1
+      response: ""
+    choiceSpeaker: 0
   - speaker: 0
     sentence: "N\xE3o sei como vamos passar por isso."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
-    sentence: Mas eu espero que onde a Claire estiver...
+    sentence: "Mas eu espero que onde a Claire estiver..."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
-    sentence: ela esteja nos vigiando.
+    sentence: "ela esteja nos vigiando."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
     sentence: "Cuidando de n\xF3s."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
-    sentence: Afinal, ainda estamos respirando.
+    sentence: "Afinal, ainda estamos respirando."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 3
-    sentence: Eu te amo, meu amor. Vamos passar por isso juntos.
+    sentence: "Eu te amo, meu amor. Vamos passar por isso juntos."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
     sentence: "Tamb\xE9m te amo... vamos para casa."
+    choices: []
+    choiceSpeaker: 0

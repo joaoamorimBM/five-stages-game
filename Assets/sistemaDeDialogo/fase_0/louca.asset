@@ -12,10 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: louca
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Lou\xE7a na pia"
   dialogueLines:
   - speaker: 0
-    sentence: "E a pilha de lou\xE7a s\xF3 aumenta.\n"
-  - speaker: 0
-    sentence: "Amanh\xE3 eu lavo...\n"
-  - speaker: 0
-    sentence: "Se houver amanh\xE3...\n"
+    sentence: "E a pilha de lou\xE7a s\xF3 aumenta."
+    choices:
+    - text: "Amanh\xE3 eu lavo... se houver amanh\xE3."
+      stage: 3
+      response: ""
+    - text: "Depois eu vejo isso. N\xE3o \xE9 nada demais."
+      stage: 0
+      response: ""
+    - text: "Vou lavar pelo menos uns pratos agora."
+      stage: 4
+      response: ""
+    choiceSpeaker: 0

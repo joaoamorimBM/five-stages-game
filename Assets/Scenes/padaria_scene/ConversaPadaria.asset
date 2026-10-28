@@ -12,23 +12,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: ConversaPadaria
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Conversa com a Grace na padaria"
   dialogueLines:
   - speaker: 0
-    sentence: Bom dia, Grace.
+    sentence: "Bom dia, Grace."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 5
     sentence: "Noah! Que bom te ver. Como voc\xEA e a Emily est\xE3o?"
-  - speaker: 0
-    sentence: "Bem. A gente t\xE1 bem."
+    choices:
+    - text: "Bem. A gente t\xE1 bem."
+      stage: 0
+      response: ""
+    - text: "Sinceramente? N\xE3o sei, Grace. T\xE1 dif\xEDcil."
+      stage: 4
+      response: ""
+    - text: "Como voc\xEA acha que a gente t\xE1?"
+      stage: 1
+      response: ""
+    choiceSpeaker: 0
   - speaker: 5
-    sentence: ...Noah
+    sentence: "...Noah"
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
     sentence: "Me v\xEA um caf\xE9 preto com tapioca e um misto com chocolate quente."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 5
     sentence: "O de sempre ent\xE3o... Capricha no chocolate?"
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
-    sentence: Bastante chocolate, sim.
+    sentence: "Bastante chocolate, sim."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 5
-    sentence: "Pode sentar que eu te levo, t\xE1? E Noah... se precisar de alguma
-      coisa, t\xF4 aqui."
+    sentence: "Pode sentar que eu te levo, t\xE1? E Noah... se precisar de alguma coisa, t\xF4 aqui."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
     sentence: "T\xF4 bem, Grace. Obrigado."
+    choices: []
+    choiceSpeaker: 0

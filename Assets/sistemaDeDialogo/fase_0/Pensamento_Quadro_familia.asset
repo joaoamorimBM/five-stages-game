@@ -12,8 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: Pensamento_Quadro_familia
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Foto da fam\xEDlia"
   dialogueLines:
   - speaker: 0
-    sentence: "Meu Deus! Que saudade desse dia...\n "
+    sentence: "Meu Deus! Que saudade desse dia..."
+    choices: []
+    choiceSpeaker: 0
   - speaker: 0
-    sentence: "A gente tirou essa foto no anivers\xE1rio dela... tr\xEAs meses atr\xE1s.\n"
+    sentence: "A gente tirou essa foto no anivers\xE1rio dela... tr\xEAs meses atr\xE1s."
+    choices:
+    - text: "Se eu tivesse sa\xEDdo mais cedo naquele dia... ela ainda estaria aqui."
+      stage: 2
+      response: ""
+    - text: "Parece que ela vai entrar por aquela porta a qualquer momento."
+      stage: 0
+      response: ""
+    - text: "Foi um dia lindo. Quero lembrar dela assim."
+      stage: 4
+      response: ""
+    choiceSpeaker: 0
