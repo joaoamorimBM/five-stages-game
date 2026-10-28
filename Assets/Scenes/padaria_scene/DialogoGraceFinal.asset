@@ -12,6 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: DialogoGraceFinal
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Grace pergunta se Noah est\xE1 bem"
   dialogueLines:
   - speaker: 5
     sentence: "Noah... t\xE1 tudo bem?"
+    choices:
+    - text: "T\xE1. T\xE1 tudo bem."
+      stage: 0
+      response: ""
+    - text: "N\xE3o... n\xE3o t\xE1."
+      stage: 4
+      response: ""
+    - text: "..."
+      stage: 3
+      response: ""
+    choiceSpeaker: 0

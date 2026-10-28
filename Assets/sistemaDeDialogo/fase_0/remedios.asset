@@ -12,8 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: remedios
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Rem\xE9dios"
   dialogueLines:
   - speaker: 0
-    sentence: "O m\xE9dico receitou. N\xE3o estou tomando. "
-  - speaker: 0
-    sentence: "N\xE3o adianta."
+    sentence: "O m\xE9dico receitou. N\xE3o estou tomando."
+    choices:
+    - text: "N\xE3o adianta."
+      stage: 3
+      response: ""
+    - text: "Eu n\xE3o preciso disso. Eu t\xF4 bem."
+      stage: 0
+      response: ""
+    - text: "Talvez eu devesse tentar. Pela Emily."
+      stage: 4
+      response: ""
+    choiceSpeaker: 0

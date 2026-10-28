@@ -31,6 +31,9 @@ public class ThoughtInteractable : MonoBehaviour, IInteractable
             return;
         }
 
+        // Conta como objeto observado no relatório
+        ReportLogger.LogInteract(gameObject.name);
+
         // Trava o movimento do player
         if (playerMovement != null)
             playerMovement.SetMovementLocked(true);

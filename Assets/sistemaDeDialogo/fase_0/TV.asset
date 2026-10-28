@@ -12,8 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: TV
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "TV ligada"
   dialogueLines:
   - speaker: 0
     sentence: "Esse \xE9 o desenho favorito dela."
-  - speaker: 0
-    sentence: "Ainda n\xE3o tive coragem de desligar."
+    choices:
+    - text: "Ainda n\xE3o tive coragem de desligar."
+      stage: 3
+      response: ""
+    - text: "Deixa ligada. Ela vai querer assistir quando voltar."
+      stage: 0
+      response: ""
+    - text: "Vou desligar. Mas n\xE3o vou esquecer."
+      stage: 4
+      response: ""
+    choiceSpeaker: 0
