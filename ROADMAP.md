@@ -22,14 +22,14 @@ Jogo (Unity)  →  Supabase  ←  Site do psicólogo
 
 **Objetivo:** projeto limpo, funcionando, com o Claude Code enxergando o contexto.
 
-- [ ] Clone novo com LFS: `git lfs install`, depois `git clone --branch develop https://github.com/joaoamorimBM/five-stages-game.git five-stages-novo2`
-- [ ] Conferir: `(Get-Item Assets\Scenes\Menu\videoMenu.mp4).Length` deve dar `1375962` e `git lfs ls-files | Select-String "^[0-9a-f]+ - "` deve voltar vazio
-- [ ] Abrir no Unity Hub (versão **6000.3.9f1**), esperar importar, testar menu, casa, beco e padaria
-- [ ] `git config --global user.name` e `user.email` configurados
-- [ ] Copiar `CLAUDE.md` e `ROADMAP.md` pra **raiz** do projeto e commitar: `git add CLAUDE.md ROADMAP.md`
-- [ ] Criar a branch: `git checkout -b feature/relatorio`
-- [ ] Unity: *Edit → Preferences → External Tools → External Script Editor* = Visual Studio Code, depois *Regenerate project files*
-- [ ] Abrir o Claude Code na raiz (`claude`) e testar com: *"Leia o CLAUDE.md e me diga, com suas palavras, qual é a meta atual e o que você não deve fazer."*
+- [x] Clone novo com LFS: `git lfs install`, depois `git clone --branch develop https://github.com/joaoamorimBM/five-stages-game.git five-stages-novo2`
+- [x] Conferir: `(Get-Item Assets\Scenes\Menu\videoMenu.mp4).Length` deve dar `1375962` e `git lfs ls-files | Select-String "^[0-9a-f]+ - "` deve voltar vazio
+- [x] Abrir no Unity Hub (versão **6000.3.9f1**), esperar importar, testar menu, casa, beco e padaria
+- [x] `git config --global user.name` e `user.email` configurados
+- [x] Copiar `CLAUDE.md` e `ROADMAP.md` pra **raiz** do projeto e commitar: `git add CLAUDE.md ROADMAP.md`
+- [x] Criar a branch: `git checkout -b feature/relatorio`
+- [x] Unity: *Edit → Preferences → External Tools → External Script Editor* = Visual Studio Code, depois *Regenerate project files*
+- [x] Abrir o Claude Code na raiz (`claude`) e testar com: *"Leia o CLAUDE.md e me diga, com suas palavras, qual é a meta atual e o que você não deve fazer."*
 
 **Pronto quando:** o jogo roda inteiro e o Claude Code resume o contexto corretamente.
 
@@ -40,7 +40,7 @@ Jogo (Unity)  →  Supabase  ←  Site do psicólogo
 **Objetivo:** o jogo gravar um relatório `.json` e `.txt` no disco.
 
 **Passos**
-- [ ] Colocar `ReportLogger.cs` em `Assets/Scripts/` e **sobrescrever** o conteúdo de `PlayerInteraction1.cs` e `DialogueManager.cs` (sem apagar os arquivos, pra manter a ligação com as cenas)
+- [x] Colocar `ReportLogger.cs` em `Assets/Scripts/` e **sobrescrever** o conteúdo de `PlayerInteraction1.cs` e `DialogueManager.cs` (sem apagar os arquivos, pra manter a ligação com as cenas)
 - [ ] Dar Play na `Scene_Room`/`Scene_House`, observar alguns objetos, abrir um diálogo, trocar de cena
 - [ ] Abrir `C:\Users\<você>\AppData\LocalLow\DefaultCompany\My project\Relatorios` e ler o `.txt`
 - [ ] Commit: `feat: ReportLogger registra interações e diálogos`
@@ -67,8 +67,8 @@ e quando o arquivo é gravado. Depois me faça 3 perguntas pra eu verificar que 
 **Objetivo:** o relatório dizer **o que existia pra observar** em cada cena, pra o site mostrar o que o paciente ignorou.
 
 **Passos**
-- [ ] ✍️ Ao carregar cada cena, o logger lista todos os objetos com `IInteractable` e guarda no relatório (campo novo, `availableInteractables`, por cena)
-- [ ] Subir `formatVersion` para **2** e documentar a mudança no `CLAUDE.md`
+- [x] ✍️ Ao carregar cada cena, o logger lista todos os objetos com `IInteractable` e guarda no relatório (campo novo, `availableInteractables`, por cena)
+- [x] Subir `formatVersion` para **2** e documentar a mudança no `CLAUDE.md`
 - [ ] Testar: o `.json` deve ter, pra cada cena visitada, a lista de interativos disponíveis
 - [ ] Commit: `feat: relatório lista interativos disponíveis por cena (formato v2)`
 
@@ -201,7 +201,7 @@ ainda. Depois vamos corrigir um por um e eu explico cada correção.
 
 ## Depois (opcional)
 
-- **Escolhas ramificadas:** diálogos com opções de resposta, registradas no relatório (formato v3).
+- [x] **Escolhas nos diálogos:** opções de resposta classificadas por estágio do luto, registradas no relatório (formato v3). Não ramificam a história.
 - **Otimização:** ajustar *Max Size* e compressão das texturas e usar o *Build Report* num build funcionando. Asset sem uso não entra no build, então isso rende mais do que apagar.
 - **Limpeza de assets:** só com uma ferramenta que entenda a busca de materiais **por nome** dos FBX. Foi tentada e quebrou o jogo, então fica por último.
 - Limpar as linhas residuais do `.gitattributes`.
