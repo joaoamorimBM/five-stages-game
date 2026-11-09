@@ -9,7 +9,6 @@ public class BecoSequenceManager : MonoBehaviour
     [SerializeField] private Camera noahCamera; 
     [SerializeField] private Transform[] caminhoCaminhadaNoah;
     [SerializeField] private Transform[] caminhoAteFinalBeco;
-    [SerializeField] private Transform pontoInteracaoGato; 
     
     [Header("Referências do Gato e Lata")]
     [SerializeField] private GameObject gatoPlaceholder;
@@ -24,7 +23,7 @@ public class BecoSequenceManager : MonoBehaviour
 
     [Header("Configurações Físicas e Áudio")]
     [SerializeField] private float velocidadeCaminhadaNoah = 2f;
-    [SerializeField] private float forcaChute = 18f;
+    [SerializeField] private float velocidadeChuteLata = 2.8f;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioClip somChuteLata;
 
@@ -40,7 +39,7 @@ public class BecoSequenceManager : MonoBehaviour
     [SerializeField] private Transform pontoOlharEmily;
 
     [Header("Configurações do Trigger do Gato")]
-    [SerializeField] private float distanciaAtivacaoGato = 4f;
+    [SerializeField] private float alcanceDialogoGato = 2f;
 
     [Header("Efeitos de Raiva")]
     [SerializeField] private AlleyIntroManager alleyIntroManager;
@@ -50,13 +49,17 @@ public class BecoSequenceManager : MonoBehaviour
     [SerializeField] private float tempoMaxFugaGato = 8f;
 
     private bool _dialogoEmAndamento = false;
+    private Coroutine sequenciaInicial;
+    private bool voltandoDoFlashback;
+    private const float DistanciaChute = 1.05f;
 
     private void OnEnable() => DialogueManager.OnDialogueEnded += NotificarFimDialogo;
     private void OnDisable() => DialogueManager.OnDialogueEnded -= NotificarFimDialogo;
 
     private void Start()
     {
-        StartCoroutine(SequenciaBecoRoutine());
+        if (!voltandoDoFlashback && (GameManager.Instance == null || !GameManager.Instance.returningFromFlashback))
+            sequenciaInicial = StartCoroutine(SequenciaBecoRoutine());
     }
 
     private void NotificarFimDialogo()
@@ -81,19 +84,19 @@ public class BecoSequenceManager : MonoBehaviour
                            "Arraste o componente CatBecoCutscene do gato para este campo.");
 
         // --- PARTE 1: ESPERA O PLAYER CHEGAR PERTO DO GATO ---
-        // Se gatoPlaceholder for null, a condição passa imediatamente (em vez de
-        // travar para sempre) — assim a cena nunca fica presa aqui.
         yield return new WaitUntil(() =>
-            gatoPlaceholder == null ||
-            Vector3.Distance(noahTransform.position, gatoPlaceholder.transform.position) <= distanciaAtivacaoGato
+            DialogueManager.Instance != null && !DialogueManager.Instance.isDialogueActive &&
+            (gatoPlaceholder == null || PertoDoGato())
         );
-
-        yield return new WaitForSeconds(0.5f);
 
         if (playerMovement != null)
             playerMovement.SetMovementLocked(true);
 
+        yield return new WaitForSeconds(0.5f);
+
         // --- PARTE 2: DIÁLOGO COM O GATO ---
+        if (gatoScript != null)
+            gatoScript.PlayMeow();
         _dialogoEmAndamento = true;
         DialogueManager.Instance.StartDialogue(dialogoGato);
         yield return new WaitUntil(() => !_dialogoEmAndamento);
@@ -149,10 +152,11 @@ public class BecoSequenceManager : MonoBehaviour
 
         // --- PARTE 4: AGUARDA 3 SEGUNDOS ---
         yield return new WaitForSeconds(3f);
+        yield return AproximarDaLixeira(playerCC);
 
         // --- PARTE 5: ENCARAR A LATA ---
         float tempoOlharLata = 0f;
-        while (tempoOlharLata < 0.8f)
+        while (lataLixoRb != null && tempoOlharLata < 0.8f)
         {
             tempoOlharLata += Time.deltaTime;
 
@@ -176,22 +180,7 @@ public class BecoSequenceManager : MonoBehaviour
         if (alleyIntroManager != null)
             alleyIntroManager.StopAngerEffects();
 
-        if (lataLixoRb != null)
-        {
-            if (sfxSource != null && somChuteLata != null)
-                sfxSource.PlayOneShot(somChuteLata);
-
-            if (tampaLixoRb != null)
-            {
-                tampaLixoRb.isKinematic = false;
-                tampaLixoRb.transform.SetParent(null);
-                Vector3 direcaoSaltoTampa = (lataLixoRb.transform.position - noahTransform.position).normalized + (Vector3.up * 1.5f);
-                tampaLixoRb.AddForce(direcaoSaltoTampa * (forcaChute * 0.7f), ForceMode.Impulse);
-            }
-
-            Vector3 direcaoChuteLata = (lataLixoRb.transform.position - noahTransform.position).normalized + (Vector3.up * 0.3f);
-            lataLixoRb.AddForce(direcaoChuteLata * forcaChute, ForceMode.Impulse);
-        }
+        ChutarLixeira(playerCC);
 
         yield return new WaitForSeconds(1.5f);
 
@@ -265,6 +254,90 @@ public class BecoSequenceManager : MonoBehaviour
         DispararTransiciaoFlashback();
     }
 
+    private void ChutarLixeira(CharacterController playerCC)
+    {
+        if (lataLixoRb == null) return;
+        if (DirecaoHorizontalAteLixeira().sqrMagnitude > DistanciaChute * DistanciaChute)
+        {
+            Debug.LogWarning("[BecoSequenceManager] Noah não conseguiu chegar perto da lixeira. Pulando o chute.");
+            return;
+        }
+
+        if (sfxSource != null && somChuteLata != null)
+            sfxSource.PlayOneShot(somChuteLata);
+
+        Vector3 rota = noahTransform.forward;
+        foreach (Transform ponto in caminhoAteFinalBeco)
+        {
+            if (ponto == null) continue;
+
+            Vector3 trecho = ponto.position - noahTransform.position;
+            trecho.y = 0f;
+            if (trecho.sqrMagnitude < 0.09f) continue;
+
+            rota = trecho;
+            break;
+        }
+
+        // Empurra para o lado da rota onde a lixeira já está.
+        Vector3 lado = Vector3.Cross(Vector3.up, rota).normalized;
+        if (Vector3.Dot(lataLixoRb.position - noahTransform.position, lado) < 0f)
+            lado = -lado;
+
+        Vector3 eixoTombo = Vector3.Cross(Vector3.up, lado);
+        if (tampaLixoRb != null)
+        {
+            tampaLixoRb.transform.SetParent(null);
+            LancarPeca(tampaLixoRb, playerCC, lado * (velocidadeChuteLata * 0.7f) + Vector3.up * 2f, eixoTombo * 4f);
+        }
+
+        LancarPeca(lataLixoRb, playerCC, lado * velocidadeChuteLata + Vector3.up * 0.6f, eixoTombo * 3f);
+    }
+
+    private IEnumerator AproximarDaLixeira(CharacterController playerCC)
+    {
+        float tempoRestante = 4f;
+        while (lataLixoRb != null && tempoRestante > 0f)
+        {
+            Vector3 direcao = DirecaoHorizontalAteLixeira();
+            float distancia = direcao.magnitude;
+            if (distancia <= DistanciaChute) yield break;
+
+            noahTransform.rotation = Quaternion.Slerp(noahTransform.rotation,
+                Quaternion.LookRotation(direcao), 6f * Time.deltaTime);
+            float passo = Mathf.Min(velocidadeCaminhadaNoah * Time.deltaTime, distancia - (DistanciaChute - 0.05f));
+            Vector3 movimento = direcao / distancia * passo;
+            if (playerCC != null)
+                playerCC.Move(movimento);
+            else
+                noahTransform.position += movimento;
+
+            tempoRestante -= Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private Vector3 DirecaoHorizontalAteLixeira()
+    {
+        Vector3 direcao = lataLixoRb.position - noahTransform.position;
+        direcao.y = 0f;
+        return direcao;
+    }
+
+    private static void LancarPeca(Rigidbody peca, CharacterController playerCC, Vector3 velocidade, Vector3 giro)
+    {
+        // Mantém as colisões com o cenário, mas impede que a peça trave a caminhada do Noah.
+        if (playerCC != null)
+        {
+            foreach (Collider collider in peca.GetComponentsInChildren<Collider>())
+                Physics.IgnoreCollision(playerCC, collider);
+        }
+
+        peca.isKinematic = false;
+        peca.linearVelocity = velocidade;
+        peca.angularVelocity = giro;
+    }
+
     private void DispararTransiciaoFlashback()
     {
         StartCoroutine(TransicaoParaFlashback());
@@ -284,7 +357,27 @@ public class BecoSequenceManager : MonoBehaviour
 
     public void RetornarDoFlashback()
     {
+        if (voltandoDoFlashback) return;
+        voltandoDoFlashback = true;
+        if (sequenciaInicial != null)
+            StopCoroutine(sequenciaInicial);
+        if (gatoPlaceholder != null)
+            gatoPlaceholder.SetActive(false);
+
         StartCoroutine(SequenciaPosFlashbackRoutine());
+    }
+
+    private bool PertoDoGato()
+    {
+        Transform gato = gatoPlaceholder.transform;
+        Vector3 distancia = gato.position - noahTransform.position;
+        distancia.y = 0f;
+        if (distancia.sqrMagnitude > alcanceDialogoGato * alcanceDialogoGato) return false;
+
+        Vector3 alvo = gato.position + Vector3.up * 0.25f;
+        return !Physics.Linecast(noahCamera.transform.position, alvo, out RaycastHit hit,
+                   Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+               || hit.transform.IsChildOf(gato);
     }
 
     private IEnumerator SequenciaPosFlashbackRoutine()

@@ -1230,7 +1230,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7aedaaae90a04f948b3d906bdbcaa09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CatBecoCutscene
-  catDialogueData: {fileID: 11400000, guid: c77dd2fa6326d4c00958b7a01f78c6eb, type: 2}
   targetSaidaCaixa: {fileID: 1053956590}
   targetHole: {fileID: 924085662}
   walkSpeed: 2
@@ -18896,7 +18895,6 @@ MonoBehaviour:
   - {fileID: 1711329993}
   caminhoAteFinalBeco:
   - {fileID: 940917664}
-  pontoInteracaoGato: {fileID: 1711329993}
   gatoPlaceholder: {fileID: 1799793704}
   gatoScript: {fileID: 1799793707}
   lataLixoRb: {fileID: 734136358}
@@ -18905,7 +18903,7 @@ MonoBehaviour:
   dialogoAntesFlashback: {fileID: 11400000, guid: ae834aa479591421bbaf53ed88c0e2f5, type: 2}
   dialogoPosFlashback: {fileID: 11400000, guid: 1a56419a936304ff8b9797e54bf93ddb, type: 2}
   velocidadeCaminhadaNoah: 2
-  forcaChute: 15
+  velocidadeChuteLata: 2.8
   sfxSource: {fileID: 734136357}
   somChuteLata: {fileID: 8300000, guid: 3c55c28c7b74a4cce8186e582734725c, type: 3}
   tampaLixoRb: {fileID: 2053008208}
@@ -18913,7 +18911,7 @@ MonoBehaviour:
   scriptRotacaoCamera: {fileID: 1935562600}
   emilyPrefab: {fileID: 369067465}
   pontoOlharEmily: {fileID: 1996045383}
-  distanciaAtivacaoGato: 4
+  alcanceDialogoGato: 2
   alleyIntroManager: {fileID: 1752885027}
   tempoMaxFugaGato: 8
 --- !u!4 &1465491387
@@ -19919,7 +19917,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7aedaaae90a04f948b3d906bdbcaa09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CatBecoCutscene
-  catDialogueData: {fileID: 11400000, guid: c77dd2fa6326d4c00958b7a01f78c6eb, type: 2}
   targetSaidaCaixa: {fileID: 1053956590}
   targetHole: {fileID: 924085662}
   walkSpeed: 2
@@ -20905,6 +20902,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a9fed7d5ef8c07b479ac1257ac07672f, type: 3}
+--- !u!1001 &3433349601441480299
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2029498491814074728, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6112498628984023852, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
+      propertyPath: m_Name
+      value: Bordas do beco
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0c5c845cf5c280644bca8ea14ea0d19d, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -20983,3 +21037,4 @@ SceneRoots:
   - {fileID: 1144280577}
   - {fileID: 1738265168}
   - {fileID: 2092182275}
+  - {fileID: 3433349601441480299}

@@ -1,12 +1,7 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class CatBecoCutscene : MonoBehaviour
 {
-    [Header("Dados do Diálogo")]
-    [SerializeField] private DialogueData catDialogueData;
-
     [Header("Configurações de Movimento (Ordem de Passagem)")]
     [SerializeField] private Transform targetSaidaCaixa; // Ponto 1: Logo à frente da abertura da caixa
     [SerializeField] private Transform targetHole;        // Ponto 2: O buraco na parede de arame
@@ -17,14 +12,13 @@ public class CatBecoCutscene : MonoBehaviour
     [SerializeField] private string animMiau = "miau";
     [SerializeField] private string animWalk = "walk";
 
-    private bool canInteract = false;
-    private bool dialogueStarted = false;
     private bool shouldMove = false;
 
     // Controla qual ponto do caminho o gato está perseguindo no momento
     private int currentWaypointIndex = 0;
     private Transform[] pathWaypoints;
     private Animator anim;
+    private float alturaDaFuga;
 
     private void Start()
     {
@@ -37,7 +31,13 @@ public class CatBecoCutscene : MonoBehaviour
         // MUITO IMPORTANTE para o modelo real: desliga o Root Motion para a
         // animação NÃO brigar com o transform.position do MoveAlongPath.
         if (anim != null)
+        {
             anim.applyRootMotion = false;
+            RuntimeAnimatorController controllerDoBeco =
+                Resources.Load<RuntimeAnimatorController>("CatBeco");
+            if (controllerDoBeco != null)
+                anim.runtimeAnimatorController = controllerDoBeco;
+        }
 
         pathWaypoints = new Transform[2];
         pathWaypoints[0] = targetSaidaCaixa;
@@ -49,34 +49,14 @@ public class CatBecoCutscene : MonoBehaviour
 
     private void Update()
     {
-        if (canInteract && !dialogueStarted)
-        {
-            bool eKeyPressed = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
-            if (eKeyPressed)
-                TriggerCatDialogue();
-        }
-
         if (shouldMove)
             MoveAlongPath();
     }
 
-    private void TriggerCatDialogue()
-    {
-        dialogueStarted = true;
-        canInteract = false;
-
-        PlaySafe(animMiau);
-
-        if (DialogueManager.Instance != null && catDialogueData != null)
-            DialogueManager.Instance.StartDialogue(catDialogueData);
-    }
+    public void PlayMeow() => PlaySafe(animMiau);
 
     public void StartCatEscape()
     {
-        // Garante que o gato vai andar mesmo que o diálogo tenha sido disparado
-        // pelo SequenceManager.
-        dialogueStarted = true;
-
         // Se nenhum waypoint foi atribuído, não dá pra fazer a fuga.
         // Em vez de travar a cena inteira, avisa e se desativa para o
         // BecoSequenceManager seguir em frente.
@@ -92,6 +72,7 @@ public class CatBecoCutscene : MonoBehaviour
         if (!shouldMove)
         {
             shouldMove = true;
+            alturaDaFuga = transform.position.y;
             currentWaypointIndex = 0; // Começa indo para o Ponto 1 (Saída)
             PlaySafe(animWalk);       // Troca para caminhada na hora de fugir
         }
@@ -114,21 +95,23 @@ public class CatBecoCutscene : MonoBehaviour
             return;
         }
 
-        Transform alvo = pathWaypoints[currentWaypointIndex];
+        Vector3 destino = pathWaypoints[currentWaypointIndex].position;
+        // Os pontos marcam o trajeto no plano do piso do beco.
+        destino.y = alturaDaFuga;
 
         // Move frame a frame em direção ao waypoint atual.
+        Vector3 direcao = destino - transform.position;
         transform.position = Vector3.MoveTowards(
-            transform.position, alvo.position, walkSpeed * Time.deltaTime);
+            transform.position, destino, walkSpeed * Time.deltaTime);
 
-        // Faz o gato olhar suavemente para onde está correndo.
-        Vector3 direcao = (alvo.position - transform.position).normalized;
+        // Faz o gato olhar suavemente para onde está andando.
         direcao.y = 0;
         if (direcao != Vector3.zero)
             transform.rotation = Quaternion.Slerp(
                 transform.rotation, Quaternion.LookRotation(direcao), 10f * Time.deltaTime);
 
         // Chegou perto o suficiente -> próximo ponto.
-        if (Vector3.Distance(transform.position, alvo.position) < 0.05f)
+        if (Vector3.Distance(transform.position, destino) < 0.05f)
         {
             currentWaypointIndex++;
             if (currentWaypointIndex >= pathWaypoints.Length)
@@ -146,9 +129,10 @@ public class CatBecoCutscene : MonoBehaviour
     {
         if (anim == null || string.IsNullOrEmpty(stateName)) return;
 
-        if (anim.HasState(0, Animator.StringToHash(stateName)))
+        int state = Animator.StringToHash(stateName);
+        if (anim.HasState(0, state))
         {
-            anim.Play(stateName);
+            anim.Play(state, 0, 0f);
         }
         else
         {
@@ -158,15 +142,4 @@ public class CatBecoCutscene : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-            canInteract = true;
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-            canInteract = false;
-    }
 }
