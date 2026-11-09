@@ -36,8 +36,13 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float typingSpeed = 0.03f;
     [SerializeField] private float blinkSpeed = 0.5f;
 
+    [Header("Visual")]
+    [Tooltip("Caixa 'memória íntima' (DialogueSkin): retrato de busto na caixa, nome em versalete, Alegreya Sans. Desmarque pra voltar ao visual antigo.")]
+    [SerializeField] private bool useNewLook = true;
+    private DialogueSkin skin;
+
     [Header("Opções de resposta (opcional)")]
-    [Tooltip("Onde os botões aparecem. Vazio = criado sozinho acima da caixa de diálogo.")]
+    [Tooltip("Onde os botões aparecem. Vazio = criado sozinho dentro da caixa de diálogo.")]
     [SerializeField] private RectTransform choicesContainer;
     [Tooltip("Botão com um TMP_Text filho. Vazio = botão simples criado por código.")]
     [SerializeField] private Button choiceButtonPrefab;
@@ -123,6 +128,12 @@ public class DialogueManager : MonoBehaviour
         if (nextTextIndicator != null) nextTextIndicator.SetActive(false);
         if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
         if (portraitRight != null) portraitRight.gameObject.SetActive(false);
+
+        if (useNewLook && skin == null)
+        {
+            skin = gameObject.AddComponent<DialogueSkin>();
+            skin.Build(dialogueText, new[] { portraitLeft, portraitRight }, new[] { groupNameLeft, groupNameRight });
+        }
     }
 
     private void Update()
@@ -210,6 +221,15 @@ public class DialogueManager : MonoBehaviour
         CharacterDatabase.CharacterProfile profile = characterDatabase.GetProfile(lineInfo.speaker);
         string speakerName = profile.displayName;
         Sprite speakerPortrait = profile.defaultPortrait;
+
+        // Visual novo: o retrato e o nome de quem fala ficam dentro da caixa
+        if (skin != null)
+        {
+            skin.Show(speakerName, speakerPortrait);
+            StopBlinking();
+            StartCoroutine(TypeSentence(lineInfo.sentence));
+            return;
+        }
 
         Color corFoco = Color.white;
         Color corSemFoco = new Color(0.35f, 0.35f, 0.35f, 1f);
@@ -547,13 +567,15 @@ public class DialogueManager : MonoBehaviour
             RectTransform rt = (RectTransform)go.transform;
             if (box != null)
             {
-                // Faixa no pé da caixa; o texto da opção começa na mesma margem da fala
-                float side = Mathf.Max(0f, dialogueText.rectTransform.offsetMin.x - ChoiceRowPadding);
+                // Faixa no pé da caixa, com as mesmas margens laterais da fala
+                RectTransform textRt = dialogueText.rectTransform;
                 rt.anchorMin = new Vector2(0f, 0f);
                 rt.anchorMax = new Vector2(1f, 0f);
                 rt.pivot = new Vector2(0.5f, 0f);
+                rt.sizeDelta = Vector2.zero;
                 rt.anchoredPosition = new Vector2(0f, ChoicesBottomPadding);
-                rt.sizeDelta = new Vector2(-2f * side, 0f);
+                rt.offsetMin = new Vector2(Mathf.Max(0f, textRt.offsetMin.x - ChoiceRowPadding), rt.offsetMin.y);
+                rt.offsetMax = new Vector2(Mathf.Min(0f, textRt.offsetMax.x + ChoiceRowPadding), rt.offsetMax.y);
             }
             else
             {
