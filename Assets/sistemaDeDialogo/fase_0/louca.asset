@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: louca
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   reportLabel: "Lou\xE7a na pia"
+  theme: "Autocuidado"
   dialogueLines:
   - speaker: 0
     sentence: "E a pilha de lou\xE7a s\xF3 aumenta."

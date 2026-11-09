@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Pensamento_Quadro_familia
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   reportLabel: "Foto da fam\xEDlia"
+  theme: "Mem\xF3rias da Claire"
   dialogueLines:
   - speaker: 0
     sentence: "Meu Deus! Que saudade desse dia..."

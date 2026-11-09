@@ -1,0 +1,10 @@
+# Configuração mínima do Supabase CLI. O resto fica no padrão.
+project_id = "five-stages"
+
+# O jogo chama essas funções sem login e sem chave. A segurança vem da
+# validação dentro delas (formato, tamanho, código do paciente).
+[functions.submit-report]
+verify_jwt = false
+
+[functions.check-code]
+verify_jwt = false

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Celular
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   reportLabel: "Celular"
+  theme: "Rotina"
   dialogueLines:
   - speaker: 0
     sentence: "\"Previs\xE3o do tempo: Chuva forte\""

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: remedios
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   reportLabel: "Rem\xE9dios"
+  theme: "Autocuidado"
   dialogueLines:
   - speaker: 0
     sentence: "O m\xE9dico receitou. N\xE3o estou tomando."

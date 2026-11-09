@@ -40,6 +40,8 @@ public class DialogueData : ScriptableObject
     [Header("Relatório")]
     [Tooltip("Nome amigável que aparece no relatório (ex.: 'Carta da Claire'). Vazio = nome do arquivo.")]
     public string reportLabel;
+    [Tooltip("Tema do objeto no relatório. Use sempre os mesmos nomes: Memórias da Claire, Autocuidado, Relação com a Emily, Rotina.")]
+    public string theme;
 
     [Header("Sequência de Falas do Capítulo")]
     public DialogueLine[] dialogueLines;
