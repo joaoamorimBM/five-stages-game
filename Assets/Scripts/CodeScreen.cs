@@ -234,6 +234,7 @@ public class CodeScreen : MonoBehaviour
     private static TextMeshProUGUI Text(string name, Transform parent, string text, float size, Color color, FontStyles style)
     {
         TextMeshProUGUI tmp = NewChild<TextMeshProUGUI>(name, parent);
+        if (GameFonts.Body != null) tmp.font = GameFonts.Body; // mesma fonte da caixa de diálogo
         tmp.text = text;
         tmp.fontSize = size;
         tmp.color = color;
