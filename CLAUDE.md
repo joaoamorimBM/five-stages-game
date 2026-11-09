@@ -44,7 +44,7 @@ Fluxo completo (testado em 09/11/2026 e funcionando):
 
 ## Estado atual (09/11/2026)
 
-**Git:** tudo está na branch **`feature/site-psicologo`** (já no GitHub), com PR pra `develop`. Até o merge, use essa branch. Depois do merge, volte pra `develop`.
+**Git:** tudo isso já está na **`develop`** (PRs #47 e #48 e o merge da documentação). A `develop` é a branch de trabalho de todo mundo: trabalho novo em `feature/<nome>` saindo dela.
 
 ### Jogo (`Assets/`)
 - **Tela de código** (`Assets/Scripts/CodeScreen.cs`): criada por código por cima do `Scene_MainMenu`, sem mexer na cena. Tem texto de consentimento, campo do código, **Começar** e **Jogar sem código** (não grava nada). Reaparece a cada volta ao menu, pra um computador de clínica não herdar o código do paciente anterior. Título e botões usam a Bebas Neue do menu (pega do objeto `Titulo` da cena); o texto usa Alegreya Sans.
@@ -189,10 +189,9 @@ Os dados são sobre saúde emocional: **dado pessoal sensível**. Sempre:
 ## Próximos passos
 
 Ver `ROADMAP.md`. Resumo do que falta:
-1. Merge do PR `feature/site-psicologo` → `develop`.
-2. Publicar o site na Vercel (Root Directory `site`, as duas variáveis do `.env.local`) e adicionar a URL no Supabase (Site URL e Redirect URLs).
-3. Testar com **dois psicólogos** (um não pode ver os pacientes do outro) e o fluxo offline (jogar sem internet, reconectar).
-4. Revisar com um psicólogo o texto de consentimento, os textos das opções e os temas.
-5. Definir o prazo de retenção dos dados (hoje: o psicólogo apaga quando quiser) e atualizar a página de Privacidade.
-6. Pro Luís testar o site: ele cria o próprio `site/.env.local`.
-7. Roteiro de demonstração de 3 minutos pra banca e o texto do TCC (arquitetura, decisões, limitações).
+1. Publicar o site na Vercel (Root Directory `site`, as duas variáveis do `.env.local`) e adicionar a URL no Supabase (Site URL e Redirect URLs).
+2. Testar com **dois psicólogos** (um não pode ver os pacientes do outro) e o fluxo offline (jogar sem internet, reconectar).
+3. Revisar com um psicólogo o texto de consentimento, os textos das opções e os temas.
+4. Definir o prazo de retenção dos dados (hoje: o psicólogo apaga quando quiser) e atualizar a página de Privacidade.
+5. Pro Luís testar o site: ele cria o próprio `site/.env.local`.
+6. Roteiro de demonstração de 3 minutos pra banca e o texto do TCC (arquitetura, decisões, limitações).

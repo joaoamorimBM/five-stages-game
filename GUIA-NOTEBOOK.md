@@ -26,12 +26,12 @@ No PowerShell, dentro da pasta onde quer o projeto (ex.: `D:\Unity\fiveStages`):
 
 ```powershell
 git lfs install
-git clone --branch feature/site-psicologo https://github.com/joaoamorimBM/five-stages-game.git five-stages-game
+git clone --branch develop https://github.com/joaoamorimBM/five-stages-game.git five-stages-game
 cd five-stages-game
 git lfs pull
 ```
 
-> Se o PR já foi aceito, troque `feature/site-psicologo` por `develop`.
+> Tudo o que foi feito (tela de código, relatório, caixa de diálogo nova, site) está na `develop`.
 
 **Conferir se o LFS baixou tudo:**
 
