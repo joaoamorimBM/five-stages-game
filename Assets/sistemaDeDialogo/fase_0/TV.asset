@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: TV
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   reportLabel: "TV ligada"
+  theme: "Mem\xF3rias da Claire"
   dialogueLines:
   - speaker: 0
     sentence: "Esse \xE9 o desenho favorito dela."

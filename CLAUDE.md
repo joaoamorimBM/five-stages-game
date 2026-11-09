@@ -38,37 +38,39 @@ Jogo (Unity)  →  Supabase (banco + login + Edge Function)  ←  Site do psicó
 - Cada psicólogo só pode ver os próprios pacientes (Row Level Security no banco).
 - O site mostra: lista de pacientes, gerar código, lista de sessões e a página da sessão (linha do tempo, tempo por cena, **o que o paciente observou e o que deixou de observar**).
 
-### Formato do relatório (v3, implementado no `ReportLogger`)
+### Formato do relatório (v4, implementado no `ReportLogger`)
+
+Já vem organizado como o site mostra. Tipo TypeScript equivalente: `site/src/lib/tipos.ts` (`RelatorioV4`).
 
 ```json
 {
-  "formatVersion": 3,
-  "patientCode": "K7M2P9XQ",
+  "formatVersion": 4,
+  "patientCode": "K7M2-9QXP",
   "sessionId": "uuid",
-  "startedAt": "2026-10-19T15:00:00.0000000Z",
-  "endedAt": "2026-10-19T15:14:02.0000000Z",
+  "gameVersion": "0.1",
+  "startedAt": "2026-11-09T18:00:00.0000000Z",
+  "endedAt": "2026-11-09T18:14:02.0000000Z",
   "durationSeconds": 842.0,
   "partial": false,
-  "events": [
-    { "t": 12.4, "scene": "Scene_House", "type": "interact", "target": "Carta", "seconds": 0, "lines": 0, "typingSkips": 0, "choice": "", "stage": "" },
-    { "t": 12.4, "scene": "Scene_House", "type": "dialogue", "target": "Remédios", "seconds": 18.2, "lines": 2, "typingSkips": 1, "choice": "", "stage": "" },
-    { "t": 15.1, "scene": "Scene_House", "type": "choice", "target": "Remédios", "seconds": 3.4, "lines": 0, "typingSkips": 0, "choice": "Não adianta.", "stage": "Depressao" },
-    { "t": 95.7, "scene": "Scene_Alley", "type": "sceneChange", "target": "Scene_Alley", "seconds": 0, "lines": 0, "typingSkips": 0, "choice": "", "stage": "" }
-  ],
-  "availableInteractables": [
-    { "scene": "Scene_House", "objects": ["Carta", "Porta", "Quadro"] }
-  ]
+  "scenes": [ { "scene": "Scene_House", "label": "Casa", "t": 20.0, "seconds": 170.0 } ],
+  "observables": [ { "scene": "Scene_House", "id": "remedios", "label": "Remédios", "theme": "Autocuidado", "order": 2, "t": 38.0, "seconds": 9.0 } ],
+  "choices": [ { "t": 41.0, "scene": "Scene_House", "dialogue": "Remédios", "speaker": "Noah", "prompt": "O médico receitou. Não estou tomando.",
+                 "options": [ { "text": "Não adianta.", "stage": "Depressao" }, { "text": "Eu não preciso disso. Eu tô bem.", "stage": "Negacao" } ],
+                 "chosen": 1, "seconds": 2.9 } ],
+  "dialogues": [ { "t": 38.0, "scene": "Scene_House", "label": "Remédios", "seconds": 9.0, "lines": 2, "typingSkips": 1 } ]
 }
 ```
 
+- `observables`: um por **diálogo** de `ThoughtInteractable` (objetos com o mesmo diálogo contam como um), listados ao carregar a cena, inclusive inativos. `order` = ordem em que observou (0 = não observou); `seconds` = tempo no pensamento. `theme` vem do `DialogueData.theme` (vazio = "Outros").
+- `choices`: guarda **todas as opções mostradas** e o índice `chosen`, porque o que ele não escolheu também importa. `seconds` = tempo pra escolher.
+- `t` = segundos desde o início da sessão. O `t` de `dialogues` é o **início** do diálogo.
+
 Histórico:
-- **v1:** só `events`.
-- **v2:** adiciona `availableInteractables` (por cena, nomes dos GameObjects com `IInteractable`, inclusive inativos, listados uma vez ao carregar a cena). "Não observou" = está na lista e não tem evento `interact` com esse `target` naquela cena.
-- **v3:** evento `choice` (campos novos `choice` e `stage`; `seconds` = tempo pra escolher). `interact` e `availableInteractables` passam a contar **só `ThoughtInteractable`** (portas, interruptores e transições saíram). O `target` de `dialogue` é o `DialogueData.ReportName` (`reportLabel` ou nome do asset). O `t` de `dialogue` é o **início** do diálogo, e a lista de eventos fica ordenada por `t`.
+- **v1:** só `events`. **v2:** `availableInteractables`. **v3:** eventos `choice` com `choice`/`stage` (formato antigo baseado em eventos; o site e a `submit-report` ainda aceitam).
+- **v4:** troca a lista de eventos por listas organizadas (`scenes`, `observables`, `choices`, `dialogues`), com tema, rótulo legível e todas as opções.
 
 Regras do formato:
-- `type` é `sceneChange`, `interact`, `dialogue` ou `choice`. `target` é o nome do objeto, do diálogo ou da cena.
-- `stage` é o nome do enum `DialogueData.GriefStage` (`Negacao`, `Raiva`, `Barganha`, `Depressao`, `Aceitacao`). É **tendência de resposta** inspirada em Kübler-Ross, nunca diagnóstico.
+- `stage` (nas opções) é o nome do enum `DialogueData.GriefStage` (`Negacao`, `Raiva`, `Barganha`, `Depressao`, `Aceitacao`). É **tendência de resposta** inspirada em Kübler-Ross, nunca diagnóstico.
 - `sessionId` é **estável durante a sessão**. O logger salva várias vezes (a cada troca de cena e ao fechar), com `partial: true` até a sessão terminar. Portanto o envio deve ser **upsert por `sessionId`**, nunca insert duplicado.
 - Mudanças no formato exigem subir `formatVersion` e manter o site compatível com versões antigas.
 
@@ -94,7 +96,7 @@ Os dados são sobre saúde emocional, ou seja, **dado pessoal sensível**. Sempr
 - Cenas no build: `Menu/Scene_MainMenu`, `Scene_Intro`, `Scene_Room`, `Scene_House`, `Scene_Alley`, `padaria_scene`, `Acidente_Scene`, `Dedicatoria_Scene`.
 - Scripts em `Assets/Scripts/` (`Fase_0`, `Fase_02`, `Fase_1`, `GameManager.cs`, `MainMenu.cs`, `DedicationScreen.cs`) e `Assets/Beco_Assets/Scripts/` (`DialogueManager`, `DialogueData`, `DialogueTrigger`, `CharacterDataBase`, `BecoSequenceManager`...). Sem asmdef (tudo em `Assembly-CSharp`).
 - **Diálogos:** `DialogueData` é um `ScriptableObject` com lista de falas (`speaker` + `sentence`) e um `reportLabel` opcional. Os assets ficam em `Assets/sistemaDeDialogo/` (e alguns em `Beco_Assets/Diálogos`, `Scripts/Fase_1`, `Scripts/Fase_02` e `Scenes/padaria_scene`). O `DialogueManager` é singleton (`DontDestroyOnLoad`) e expõe `StartDialogue`, `PlayDialogueAuto`, `isDialogueActive`, `isAwaitingChoice` e o evento `OnDialogueEnded`.
-- **Opções de resposta:** uma fala pode ter `choices` (`text`, `stage`, `response` opcional) e `choiceSpeaker`. Depois que a fala aparece, os botões surgem acima da caixa (teclas 1 a 4 ou clique, com o cursor liberado nesse momento). A opção escolhida vira uma fala de `choiceSpeaker`, depois vem a `response` (dita por quem falou a linha), e a história segue igual. Os botões são criados por código; dá pra trocar por `choicesContainer`/`choiceButtonPrefab` no Inspector. Os enums `CharacterType` e `GriefStage` são salvos como número: **só adicione valores no final**.
+- **Opções de resposta:** uma fala pode ter `choices` (`text`, `stage`, `response` opcional) e `choiceSpeaker`. Depois que a fala aparece, as opções surgem DENTRO da caixa de diálogo, embaixo da fala e alinhadas com ela (linhas discretas, fonte 14); a fala sobe pra abrir espaço e a caixa só cresce pra cima se não couber (teclas 1 a 4 ou clique, com o cursor liberado nesse momento). A opção escolhida vira uma fala de `choiceSpeaker`, depois vem a `response` (dita por quem falou a linha), e a história segue igual. Os botões são criados por código; dá pra trocar por `choicesContainer`/`choiceButtonPrefab` no Inspector. Os enums `CharacterType` e `GriefStage` são salvos como número: **só adicione valores no final**.
 - **Interação:** a interface `IInteractable` (`Interact()`, `GetPromptText()`) é implementada por `ThoughtInteractable`, `DoorController`, `LightSwitch` e `SceneTransition`. `PlayerInteraction` (arquivo `PlayerInteraction1.cs`) faz o raycast e chama `Interact()` ao apertar E.
 - **`GameManager`:** singleton criado por `[RuntimeInitializeOnLoadMethod]`; guarda estado entre cenas. O `ReportLogger` segue o mesmo padrão.
 - As escolhas **não ramificam a história**: servem só pro relatório. Além delas, o jogador decide **o que observar, em que ordem e por quanto tempo**, e o relatório mede isso também (em números, sem nome de asset no `.txt`).
@@ -111,18 +113,19 @@ Os dados são sobre saúde emocional, ou seja, **dado pessoal sensível**. Sempr
 
 ## O que NÃO fazer
 
-- **Não edite cenas (`.unity`) nem prefabs como texto.** Mudanças em cena são feitas no editor do Unity pelo João. Se uma tarefa exigir isso, descreva os passos para ele.
+- **Não edite cenas (`.unity`) nem prefabs como texto.** Mudanças em cena são feitas no editor do Unity pelo João. Se uma tarefa exigir isso, descreva os passos para ele. **Exceções liberadas pelo João:** o prefab `Beco_Assets/Prefabs/UI/DialogueCanvas.prefab` e os textos do `Scene_MainMenu`.
 - **Não apague assets.** Uma limpeza automática por GUID já foi tentada e **quebrou o jogo**: FBX procuram materiais e texturas **pelo nome**, sem GUID, então o script marcou como lixo coisas em uso (pinheiros rosa, café sem textura). Asset sem uso **não entra no build**, então isso não afeta o jogo final. Limpeza ficou **adiada** de propósito.
 - Não toque em `Assets/Scenes/` (exceto os `.asset` de diálogo, como os de `padaria_scene`, que o João liberou), `Assets/Settings/`, `TextMesh Pro` nem nos pacotes de terceiros.
 - Não commite `Library/`, `Temp/`, `Logs/`, `UserSettings/`, `Relatorios/`, nem chaves e segredos.
 
 ## Estado atual
 
-- **Logger local (formato v3):** `Assets/Scripts/ReportLogger.cs`, com ganchos em `ThoughtInteractable.cs` (`LogInteract`) e `DialogueManager.cs` (`LogDialogue`, `LogChoice`). A sessão começa na primeira cena que não é o menu e termina ao voltar pro `Scene_MainMenu`. Fechar o jogo no meio grava `partial: true`. O `.txt` traz resumo de escolhas por estágio, exploração por cena (observou X de Y, com faixa ≥70% / ≥35%) e ritmo de leitura.
+- **Jogo (Fase 4):** `ReportLogger.cs` (formato v4, ganchos em `ThoughtInteractable` `LogObserveStart/End` e `DialogueManager` `LogDialogue/LogChoice`), `CodeScreen.cs` (tela de código por código, sem mexer na cena; `ArmSession`/`DisarmSession`), `PatientCode.cs` (mesma regra do `codigo.ts`), `ReportUploader.cs` (envia a cada save e ao abrir o jogo; 200 → `Relatorios/Enviados`, 4xx → `Relatorios/Recusados`, sem internet → fica) e `GameConfig.cs` (lê `Assets/Resources/five_stages_config.json`: `functionsUrl` vazio = offline). A sessão só grava com código aceito; no editor, dar Play direto numa cena (sem passar pelo menu) grava sem código, só local. Fechar o jogo no meio grava `partial: true`, enviado na próxima abertura.
 - Diálogos com opções: `remedios`, `louca`, `Pensamento_Quadro_familia`, `Celular`, `TV`, `torradas`, `dialogoAntesFlashBack`, `dialogoPosFlashback`, `ConversaPadaria`, `DialogoGraceFinal`.
 - `NPCInteraction` (padaria) não é `ThoughtInteractable`: o diálogo dele entra no relatório, mas não conta na exploração.
-- Saída do logger (`ReportLogger.ReportsFolder`): no editor, `Relatorios/` na raiz do projeto (no `.gitignore`, nunca commitar); no build, `Application.persistentDataPath/Relatorios/`. Arquivos `sessao_<data>_<id>.json` e `.txt`. A fila de envio da Fase 4 deve ler dessa mesma propriedade.
-- **Back-end (Fase 3):** `supabase/` escrito na branch `feature/site-psicologo` (migração, `submit-report`, `check-code`, testes em Node). Ainda **não foi publicado** num projeto Supabase.
-- **Planejado:** formato **v4** no jogo, organizado pro site: `scenes`, `observables` (com `label` e `theme`, ex. "Memórias da Claire", "Autocuidado"), `choices` (com `prompt`, `speaker`, **todas as `options`** e o índice `chosen`) e `dialogues`. Isso exige um campo `theme` no `DialogueData`. Também falta: a tela de código no jogo e o `ReportUploader`.
+- Saída do logger (`ReportLogger.ReportsFolder`): no editor, `Relatorios/` na raiz do projeto (no `.gitignore`, nunca commitar); no build, `Application.persistentDataPath/Relatorios/`. Arquivos `sessao_<data>_<id>.json` e `.txt`.
+- **Back-end (Fase 3):** `supabase/` publicado no projeto **Five Stages** (ref `stnzcrwdzwctpjnwamdo`, região São Paulo): migração aplicada e funções `submit-report` e `check-code` no ar (testadas com curl). Comandos: `npx supabase db push --remote` e `npx supabase functions deploy submit-report check-code --remote --use-api`.
+- **Caixa de diálogo (`DialogueCanvas`):** sem escalas tortas (tudo em escala 1), caixa de 640 de largura, fala preenchendo a caixa com respiro (40 nas laterais, 46 em cima por causa da etiqueta do nome) e tamanho automático de 15 a 22. O Canvas usa referência 800×600 com match na largura. A tela de código usa a fonte do título do menu (Bebas Neue).
+- Temas usados nos diálogos da casa: "Memórias da Claire" (foto, carta, TV, coruja), "Autocuidado" (remédios, louça, torradeira, geladeira), "Relação com a Emily" (Emily dormindo), "Rotina" (celular).
 - **Site (Fase 5):** `site/` (Vite + React + TS, `react-router-dom`, `supabase-js`). Login por link mágico, Pacientes (gerar código, apelido local, sessões, apagar) e Sessão (resumo por regras, como respondeu com as opções não escolhidas e "hesitou" relativo à mediana dele, para onde olhou por tema, linha do tempo). Lê os formatos 3 e 4 (`src/lib/relatorio.ts`; o tipo do v4 está em `src/lib/tipos.ts`). Sem `.env.local`, roda em **modo demonstração** com dados de exemplo. Roda com `npm run dev --prefix site` (ou o preview "site" em `.claude/launch.json`). Passo a passo de deploy na Vercel: `site/README.md`.
 - Próximos passos: ver `ROADMAP.md`.

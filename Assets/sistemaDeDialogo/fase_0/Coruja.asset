@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: Coruja
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Coruja de papel"
+  theme: "Mem\xF3rias da Claire"
   dialogueLines:
   - speaker: 0
     sentence: ...

@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394090b6edb3b4e30aa4a6f436724550, type: 3}
   m_Name: geladeira
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  reportLabel: "Geladeira"
+  theme: "Autocuidado"
   dialogueLines:
   - speaker: 0
     sentence: "N\xE3o adianta nem abrir."

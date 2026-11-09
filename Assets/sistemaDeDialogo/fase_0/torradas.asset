@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: torradas
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   reportLabel: "Torradeira"
+  theme: "Autocuidado"
   dialogueLines:
   - speaker: 0
     sentence: "Torradas..."

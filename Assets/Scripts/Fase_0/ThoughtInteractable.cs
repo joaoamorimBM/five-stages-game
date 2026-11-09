@@ -14,6 +14,12 @@ public class ThoughtInteractable : MonoBehaviour, IInteractable
 
     private bool alreadyUsed = false;
 
+    // Dados pro relatório. Objetos com o mesmo diálogo contam como um só.
+    public bool HasDialogue => dialogueAsset != null;
+    public string ReportId => dialogueAsset != null ? dialogueAsset.name : gameObject.name;
+    public string ReportLabel => dialogueAsset != null ? dialogueAsset.ReportName : gameObject.name;
+    public string ReportTheme => dialogueAsset != null ? dialogueAsset.theme : "";
+
     public void Interact()
     {
         // Se for uso único e já foi usado, ignora
@@ -32,7 +38,7 @@ public class ThoughtInteractable : MonoBehaviour, IInteractable
         }
 
         // Conta como objeto observado no relatório
-        ReportLogger.LogInteract(gameObject.name);
+        ReportLogger.LogObserveStart(ReportId);
 
         // Trava o movimento do player
         if (playerMovement != null)
@@ -50,15 +56,20 @@ public class ThoughtInteractable : MonoBehaviour, IInteractable
 
     private System.Collections.IEnumerator WaitForDialogueEnd()
     {
+        float start = Time.realtimeSinceStartup;
+
         // Espera o diálogo começar
         yield return null;
 
         // Espera o diálogo terminar
-        while (DialogueManager.Instance != null 
+        while (DialogueManager.Instance != null
                && DialogueManager.Instance.isDialogueActive)
         {
             yield return null;
         }
+
+        // Quanto tempo o jogador ficou nesse pensamento
+        ReportLogger.LogObserveEnd(ReportId, Time.realtimeSinceStartup - start);
 
         // Libera o movimento quando o diálogo fechar
         if (playerMovement != null)

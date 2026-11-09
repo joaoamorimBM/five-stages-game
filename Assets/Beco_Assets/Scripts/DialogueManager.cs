@@ -42,7 +42,7 @@ public class DialogueManager : MonoBehaviour
     [Tooltip("Botão com um TMP_Text filho. Vazio = botão simples criado por código.")]
     [SerializeField] private Button choiceButtonPrefab;
     [SerializeField] private float choiceWidth = 600f;
-    [SerializeField] private float choiceFontSize = 20f;
+    [SerializeField] private float choiceFontSize = 14f;
 
     private DialogueData currentDialogueData;
     private DialogueData.DialogueLine currentLineInfo;
@@ -445,6 +445,7 @@ public class DialogueManager : MonoBehaviour
 
             choicesContainer.gameObject.SetActive(true);
             choicesContainer.SetAsLastSibling();
+            FitChoicesInsideBox();
         }
         catch (Exception e)
         {
@@ -472,6 +473,7 @@ public class DialogueManager : MonoBehaviour
         choiceButtons.Clear();
 
         if (choicesContainer != null) choicesContainer.gameObject.SetActive(false);
+        RestoreBoxLayout();
 
         if (awaitingChoice)
         {
@@ -507,7 +509,9 @@ public class DialogueManager : MonoBehaviour
         DialogueData.DialogueLine line = currentLineInfo;
         DialogueData.DialogueChoice choice = line.choices[index];
 
-        ReportLogger.LogChoice(currentDialogueData.ReportName, choice.text, choice.stage,
+        // Vai pro relatório com TODAS as opções mostradas: o que ele não escolheu também importa
+        string speakerName = characterDatabase != null ? characterDatabase.GetProfile(line.speaker).displayName : line.speaker.ToString();
+        ReportLogger.LogChoice(currentDialogueData.ReportName, speakerName, line.sentence, line.choices, index,
                                Time.realtimeSinceStartup - choiceShownTime);
 
         HideChoices();
@@ -525,14 +529,15 @@ public class DialogueManager : MonoBehaviour
     {
         if (choicesContainer == null)
         {
-            // Lista vertical no meio da tela, filha do Canvas raiz.
-            // (O dialogueBox ocupa a tela inteira e tem escala achatada, então não serve de pai.)
-            Canvas rootCanvas = dialogueBox.GetComponentInParent<Canvas>(true).rootCanvas;
+            // As opções ficam DENTRO da caixa de diálogo, embaixo da fala, alinhadas com o texto.
+            // A caixa é o pai do texto da fala; sem ela, cai no meio do Canvas raiz.
+            RectTransform box = dialogueText != null ? dialogueText.transform.parent as RectTransform : null;
+            Transform parent = box != null ? box : dialogueBox.GetComponentInParent<Canvas>(true).rootCanvas.transform;
 
             GameObject go = new GameObject("Opcoes", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster),
                                            typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
             go.layer = dialogueBox.layer;
-            go.transform.SetParent(rootCanvas.transform, false);
+            go.transform.SetParent(parent, false);
 
             // Canvas próprio por cima dos outros (a caixa e os retratos têm canvas próprios)
             Canvas own = go.GetComponent<Canvas>();
@@ -540,13 +545,24 @@ public class DialogueManager : MonoBehaviour
             own.sortingOrder = 1000;
 
             RectTransform rt = (RectTransform)go.transform;
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(0f, 40f);
-            rt.sizeDelta = new Vector2(choiceWidth, 0f);
+            if (box != null)
+            {
+                // Faixa no pé da caixa; o texto da opção começa na mesma margem da fala
+                float side = Mathf.Max(0f, dialogueText.rectTransform.offsetMin.x - ChoiceRowPadding);
+                rt.anchorMin = new Vector2(0f, 0f);
+                rt.anchorMax = new Vector2(1f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                rt.anchoredPosition = new Vector2(0f, ChoicesBottomPadding);
+                rt.sizeDelta = new Vector2(-2f * side, 0f);
+            }
+            else
+            {
+                rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = new Vector2(choiceWidth, 0f);
+            }
 
             VerticalLayoutGroup layout = go.GetComponent<VerticalLayoutGroup>();
-            layout.spacing = 8f;
+            layout.spacing = 2f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -578,9 +594,20 @@ public class DialogueManager : MonoBehaviour
             return custom;
         }
 
-        GameObject go = new GameObject("Opcao", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+        // Linha discreta dentro da caixa: cresce com o texto (quebra de linha em vez de estourar)
+        GameObject go = new GameObject("Opcao", typeof(RectTransform), typeof(Image), typeof(Button),
+                                       typeof(VerticalLayoutGroup), typeof(LayoutElement));
         go.transform.SetParent(choicesContainer, false);
-        go.GetComponent<LayoutElement>().minHeight = 40f;
+        go.GetComponent<LayoutElement>().minHeight = 22f;
+
+        VerticalLayoutGroup inner = go.GetComponent<VerticalLayoutGroup>();
+        int pad = Mathf.RoundToInt(ChoiceRowPadding);
+        inner.padding = new RectOffset(pad, pad, 3, 3);
+        inner.childAlignment = TextAnchor.MiddleLeft;
+        inner.childControlWidth = true;
+        inner.childControlHeight = true;
+        inner.childForceExpandWidth = true;
+        inner.childForceExpandHeight = false;
 
         Image image = go.GetComponent<Image>();
         image.color = Color.white;
@@ -588,29 +615,80 @@ public class DialogueManager : MonoBehaviour
         Button button = go.GetComponent<Button>();
         button.targetGraphic = image;
         ColorBlock colors = button.colors;
-        colors.normalColor = new Color(0.08f, 0.08f, 0.08f, 0.85f);
-        colors.highlightedColor = new Color(0.3f, 0.3f, 0.3f, 0.95f);
+        // Fundo transparente: aparece só uma faixa clara ao passar o mouse
+        colors.normalColor = new Color(1f, 1f, 1f, 0f);
+        colors.highlightedColor = new Color(1f, 1f, 1f, 0.12f);
         colors.selectedColor = colors.highlightedColor;
-        colors.pressedColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+        colors.pressedColor = new Color(1f, 1f, 1f, 0.2f);
         button.colors = colors;
 
         GameObject textGo = new GameObject("Texto", typeof(RectTransform), typeof(TextMeshProUGUI));
         textGo.transform.SetParent(go.transform, false);
-        RectTransform trt = (RectTransform)textGo.transform;
-        trt.anchorMin = Vector2.zero;
-        trt.anchorMax = Vector2.one;
-        trt.offsetMin = new Vector2(16f, 6f);
-        trt.offsetMax = new Vector2(-16f, -6f);
 
         TextMeshProUGUI tmp = textGo.GetComponent<TextMeshProUGUI>();
         if (dialogueText != null) tmp.font = dialogueText.font;
-        tmp.enableAutoSizing = true;
-        tmp.fontSizeMin = 16f;
-        tmp.fontSizeMax = choiceFontSize;
-        tmp.color = Color.white;
+        tmp.enableAutoSizing = false;
+        tmp.fontSize = choiceFontSize;
+        tmp.overflowMode = TextOverflowModes.Overflow; // a altura vem do layout, então nada é cortado
+        tmp.textWrappingMode = TextWrappingModes.Normal;
+        tmp.raycastTarget = false;
+        tmp.color = new Color(0.95f, 0.93f, 0.88f, 1f);
         tmp.alignment = TextAlignmentOptions.MidlineLeft;
         tmp.text = label;
 
         return button;
+    }
+
+    // ---------- Caixa abrindo espaço pras opções ----------
+
+    private const float ChoicesBottomPadding = 14f; // do pé da caixa até a última opção
+    private const float ChoicesGap = 8f;            // entre a fala e a primeira opção
+    private const float ChoiceRowPadding = 8f;      // respiro dentro de cada linha de opção
+
+    private bool boxLayoutChanged;
+    private Vector2 boxSizeBefore;
+    private Vector2 boxPosBefore;
+    private Vector2 textOffsetMinBefore;
+
+    // Sobe o pé do texto da fala pra caber as opções embaixo dele. A caixa só cresce
+    // (pra cima) se a fala + as opções não couberem no tamanho normal.
+    private void FitChoicesInsideBox()
+    {
+        RectTransform box = choicesContainer.parent as RectTransform;
+        if (box == null || dialogueText == null || dialogueText.transform.parent != box) return;
+
+        RectTransform textRt = dialogueText.rectTransform;
+        if (!boxLayoutChanged)
+        {
+            boxSizeBefore = box.sizeDelta;
+            boxPosBefore = box.anchoredPosition;
+            textOffsetMinBefore = textRt.offsetMin;
+            boxLayoutChanged = true;
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(choicesContainer);
+        float choicesHeight = choicesContainer.rect.height;
+
+        float topInset = -textRt.offsetMax.y;
+        float promptHeight = dialogueText.GetPreferredValues(dialogueText.text, textRt.rect.width, 0f).y;
+        float needed = topInset + promptHeight + ChoicesGap + choicesHeight + ChoicesBottomPadding;
+        float extra = Mathf.Max(0f, needed - boxSizeBefore.y);
+
+        // Cresce pra cima: o pé da caixa fica onde estava
+        box.sizeDelta = new Vector2(boxSizeBefore.x, boxSizeBefore.y + extra);
+        box.anchoredPosition = boxPosBefore + new Vector2(0f, extra * box.pivot.y);
+        textRt.offsetMin = new Vector2(textOffsetMinBefore.x, ChoicesBottomPadding + choicesHeight + ChoicesGap);
+    }
+
+    private void RestoreBoxLayout()
+    {
+        if (!boxLayoutChanged) return;
+        boxLayoutChanged = false;
+
+        RectTransform box = dialogueText != null ? dialogueText.transform.parent as RectTransform : null;
+        if (box == null) return;
+        box.sizeDelta = boxSizeBefore;
+        box.anchoredPosition = boxPosBefore;
+        dialogueText.rectTransform.offsetMin = textOffsetMinBefore;
     }
 }

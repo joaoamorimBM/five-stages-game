@@ -124,11 +124,11 @@ Lembre: código anônimo, upsert por sessionId, nada de service role fora da fun
 **Objetivo:** o jogo pedir o código, e enviar o relatório sem travar quem joga offline.
 
 **Passos**
-- [ ] No menu, um campo de texto pro **código do paciente** (feito por você no editor do Unity: Claude Code descreve os passos). `MainMenu.Jogar()` chama `ReportLogger.SetPatientCode(...)`; o código fica salvo em `PlayerPrefs`
-- [ ] Criar `ReportUploader`: manda os relatórios da pasta `Relatorios` pra Edge Function com `UnityWebRequest` (POST JSON)
-- [ ] Depois de enviar com sucesso, mover o arquivo para `Relatorios/Enviados`
-- [ ] Se falhar (sem internet), o arquivo **fica** e é tentado de novo na próxima abertura do jogo e ao voltar ao menu
-- [ ] URL da função e chave pública em um `ScriptableObject` de configuração (não espalhada no código)
+- [x] Tela de código antes do menu (feita por código, em `CodeScreen.cs`) pro **código do paciente**, com consentimento e "Jogar sem código". O código fica só na memória (não vai pro `PlayerPrefs`), pra o próximo paciente não herdar
+- [x] Criar `ReportUploader`: manda os relatórios da pasta `Relatorios` pra Edge Function com `UnityWebRequest` (POST JSON)
+- [x] Depois de enviar com sucesso, mover o arquivo para `Relatorios/Enviados`
+- [x] Se falhar (sem internet), o arquivo **fica** e é tentado de novo na próxima abertura do jogo e ao voltar ao menu
+- [x] URL das funções em `Assets/Resources/five_stages_config.json` (sem chave: as funções do jogo não pedem login)
 - [ ] Commit: `feat: código do paciente no menu e envio do relatório`
 
 **Prompt**

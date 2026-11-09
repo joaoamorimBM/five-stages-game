@@ -6,35 +6,70 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Registra as ações do jogador durante a sessão e grava um relatório (.json + .txt)
-// em Application.persistentDataPath/Relatorios. Foi pensado para apoiar o psicólogo,
-// não é um instrumento validado clinicamente.
+// em ReportsFolder. Depois o ReportUploader envia o .json pro site do psicólogo.
+// Foi pensado para apoiar o psicólogo, não é um instrumento validado clinicamente.
+//
+// Formato 4: os dados já vêm organizados como o site mostra (cenas, objetos
+// observáveis com tema, escolhas com TODAS as opções mostradas, diálogos).
 public class ReportLogger : MonoBehaviour
 {
     public static ReportLogger Instance;
 
-    public const int FormatVersion = 3;
+    public const int FormatVersion = 4;
     public const string MenuSceneName = "Scene_MainMenu";
-    public const string PatientCodeKey = "patientCode";
+
+    // ---------- Formato do relatório (v4) ----------
 
     [Serializable]
-    public class ReportEvent
+    public class SceneEntry
     {
-        public float t;            // segundos desde o início da sessão
         public string scene;
-        public string type;        // sceneChange | interact | dialogue | choice
-        public string target;      // objeto, diálogo ou cena
-        public float seconds;      // dialogue: duração | choice: tempo pra escolher
-        public int lines;          // falas exibidas (só em dialogue)
-        public int typingSkips;    // vezes que pulou a digitação (só em dialogue)
-        public string choice;      // texto da opção escolhida (só em choice)
-        public string stage;       // Negacao | Raiva | Barganha | Depressao | Aceitacao (só em choice)
+        public string label;
+        public float t;        // segundos desde o início da sessão
+        public float seconds;  // quanto tempo ficou na cena
     }
 
     [Serializable]
-    public class SceneInteractables
+    public class ObservableEntry
     {
         public string scene;
-        public List<string> objects = new List<string>();
+        public string id;      // nome do diálogo (objetos com o mesmo diálogo contam como um)
+        public string label;
+        public string theme;
+        public int order;      // 1, 2, 3... na ordem em que observou; 0 = não observou
+        public float t;
+        public float seconds;  // quanto tempo ficou no pensamento
+    }
+
+    [Serializable]
+    public class ChoiceOption
+    {
+        public string text;
+        public string stage;   // Negacao | Raiva | Barganha | Depressao | Aceitacao
+    }
+
+    [Serializable]
+    public class ChoiceEntry
+    {
+        public float t;
+        public string scene;
+        public string dialogue;
+        public string speaker;  // quem fez a pergunta
+        public string prompt;   // a fala que veio antes das opções
+        public List<ChoiceOption> options = new List<ChoiceOption>();
+        public int chosen;
+        public float seconds;   // tempo pra escolher
+    }
+
+    [Serializable]
+    public class DialogueEntry
+    {
+        public float t;
+        public string scene;
+        public string label;
+        public float seconds;
+        public int lines;
+        public int typingSkips;
     }
 
     [Serializable]
@@ -43,15 +78,18 @@ public class ReportLogger : MonoBehaviour
         public int formatVersion = FormatVersion;
         public string patientCode;
         public string sessionId;
+        public string gameVersion;
         public string startedAt;
         public string endedAt;
         public float durationSeconds;
         public bool partial = true;
-        public List<ReportEvent> events = new List<ReportEvent>();
-        public List<SceneInteractables> availableInteractables = new List<SceneInteractables>();
+        public List<SceneEntry> scenes = new List<SceneEntry>();
+        public List<ObservableEntry> observables = new List<ObservableEntry>();
+        public List<ChoiceEntry> choices = new List<ChoiceEntry>();
+        public List<DialogueEntry> dialogues = new List<DialogueEntry>();
     }
 
-    // Nomes amigáveis pro .txt
+    // Nomes amigáveis das cenas
     private static readonly Dictionary<string, string> SceneLabels = new Dictionary<string, string>
     {
         { "Scene_Intro", "Introdução" },
@@ -72,12 +110,6 @@ public class ReportLogger : MonoBehaviour
         { "Aceitacao", "Aceitação" },
     };
 
-    private Report report;
-    private float sessionStartTime;
-    private string fileBaseName;
-
-    public bool SessionActive => report != null;
-
     // No editor: pasta Relatorios na raiz do projeto (ao lado de Assets, fora do git).
     // No jogo final: persistentDataPath, porque a pasta do jogo pode não aceitar escrita.
 #if UNITY_EDITOR
@@ -85,6 +117,38 @@ public class ReportLogger : MonoBehaviour
 #else
     public static string ReportsFolder => Path.Combine(Application.persistentDataPath, "Relatorios");
 #endif
+
+    // ---------- Código do paciente (definido pela tela de código) ----------
+    // Fica só na memória: num computador de clínica, o próximo paciente não herda o código.
+
+    public static string PatientCode { get; private set; } = "";
+    private static bool codeDecided;   // a tela de código já foi respondida?
+    private static bool recordingAllowed;
+
+    // "Começar" com um código válido
+    public static void ArmSession(string normalizedCode)
+    {
+        PatientCode = normalizedCode;
+        codeDecided = true;
+        recordingAllowed = true;
+    }
+
+    // "Jogar sem código": nada é gravado
+    public static void DisarmSession()
+    {
+        PatientCode = "";
+        codeDecided = true;
+        recordingAllowed = false;
+    }
+
+    private Report report;
+    private float sessionStartTime;
+    private string fileBaseName;
+    private int observedCount;
+    private bool quitting;
+
+    public bool SessionActive => report != null;
+    public string ActiveFileName => fileBaseName == null ? null : fileBaseName + ".json";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void CreateInstance()
@@ -111,6 +175,12 @@ public class ReportLogger : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        // Relatórios que ficaram de sessões anteriores (sem internet, jogo fechado...)
+        ReportUploader.UploadPending(this);
+    }
+
     void OnDestroy()
     {
         if (Instance != this) return;
@@ -120,73 +190,92 @@ public class ReportLogger : MonoBehaviour
 
     // ---------- API usada pelos outros scripts ----------
 
-    // Fase 4: o menu chama isso com o código digitado pelo paciente.
-    public static void SetPatientCode(string code)
+    public static void LogObserveStart(string id)
     {
-        PlayerPrefs.SetString(PatientCodeKey, code == null ? "" : code.Trim().ToUpperInvariant());
-        PlayerPrefs.Save();
+        if (Instance == null || !Instance.SessionActive) return;
+        Instance.MarkObserved(id);
     }
 
-    // Chamado pelo ThoughtInteractable (objetos de "observar")
-    public static void LogInteract(string target)
+    public static void LogObserveEnd(string id, float seconds)
     {
-        if (Instance == null) return;
-        Instance.AddEvent(new ReportEvent { type = "interact", target = target });
+        if (Instance == null || !Instance.SessionActive) return;
+        ObservableEntry o = Instance.report.observables.Find(x => x.id == id && x.order > 0);
+        if (o != null) o.seconds = Round(o.seconds + seconds);
     }
 
-    public static void LogDialogue(string target, float seconds, int lines, int typingSkips)
+    public static void LogDialogue(string label, float seconds, int lines, int typingSkips)
     {
-        if (Instance == null) return;
-        // Registrado quando o diálogo termina, mas entra na linha do tempo no momento em que começou
-        Instance.AddEvent(new ReportEvent
+        if (Instance == null || !Instance.SessionActive) return;
+        Instance.report.dialogues.Add(new DialogueEntry
         {
-            type = "dialogue",
-            target = target,
+            t = Instance.Now(seconds), // registrado no fim, mas marcado no início do diálogo
+            scene = SceneManager.GetActiveScene().name,
+            label = label,
             seconds = Round(seconds),
             lines = lines,
             typingSkips = typingSkips,
-        }, secondsAgo: seconds);
+        });
     }
 
-    public static void LogChoice(string dialogue, string choiceText, DialogueData.GriefStage stage, float seconds)
+    public static void LogChoice(string dialogue, string speaker, string prompt,
+                                 DialogueData.DialogueChoice[] options, int chosen, float seconds)
     {
-        if (Instance == null) return;
-        Instance.AddEvent(new ReportEvent
+        if (Instance == null || !Instance.SessionActive) return;
+
+        ChoiceEntry c = new ChoiceEntry
         {
-            type = "choice",
-            target = dialogue,
+            t = Instance.Now(),
+            scene = SceneManager.GetActiveScene().name,
+            dialogue = dialogue,
+            speaker = speaker,
+            prompt = prompt,
+            chosen = chosen,
             seconds = Round(seconds),
-            choice = choiceText,
-            stage = stage.ToString(),
-        });
+        };
+        foreach (DialogueData.DialogueChoice o in options)
+            c.options.Add(new ChoiceOption { text = o.text, stage = o.stage.ToString() });
+
+        Instance.report.choices.Add(c);
     }
 
     // ---------- Sessão ----------
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Voltar ao menu encerra a sessão
+        // Voltar ao menu encerra a sessão (e a tela de código aparece de novo)
         if (scene.name == MenuSceneName)
         {
             if (SessionActive) EndSession();
+            codeDecided = false;
+            recordingAllowed = false;
+            PatientCode = "";
             return;
         }
 
-        if (!SessionActive) StartSession();
+        if (!SessionActive)
+        {
+            // No editor, dar Play direto numa cena (sem passar pelo menu) grava sem código, pra testar
+            bool devShortcut = Application.isEditor && !codeDecided;
+            if (!recordingAllowed && !devShortcut) return;
+            StartSession();
+        }
 
-        AddEvent(new ReportEvent { type = "sceneChange", target = scene.name });
-        RecordAvailableInteractables(scene);
+        CloseCurrentScene();
+        report.scenes.Add(new SceneEntry { scene = scene.name, label = SceneLabel(scene.name), t = Now() });
+        RecordObservables(scene);
         Save(partial: true);
     }
 
     private void StartSession()
     {
         sessionStartTime = Time.realtimeSinceStartup;
+        observedCount = 0;
 
         report = new Report
         {
-            patientCode = PlayerPrefs.GetString(PatientCodeKey, ""),
+            patientCode = PatientCode,
             sessionId = Guid.NewGuid().ToString(),
+            gameVersion = Application.version,
             startedAt = DateTime.UtcNow.ToString("o"),
         };
 
@@ -195,6 +284,7 @@ public class ReportLogger : MonoBehaviour
 
     private void EndSession()
     {
+        CloseCurrentScene();
         Save(partial: false);
         report = null;
         fileBaseName = null;
@@ -202,43 +292,47 @@ public class ReportLogger : MonoBehaviour
 
     private void OnQuitting()
     {
-        // Fechou o jogo no meio: grava como incompleta
-        if (SessionActive) Save(partial: true);
+        quitting = true;
+        // Fechou o jogo no meio: grava como incompleta (é enviada na próxima vez que abrir)
+        if (!SessionActive) return;
+        CloseCurrentScene();
+        Save(partial: true);
     }
 
-    private void AddEvent(ReportEvent e, float secondsAgo = 0f)
+    private void CloseCurrentScene()
     {
-        if (!SessionActive) return;
-
-        e.t = Round(Mathf.Max(0f, Time.realtimeSinceStartup - sessionStartTime - secondsAgo));
-        e.scene = SceneManager.GetActiveScene().name;
-
-        // Mantém a lista em ordem de tempo
-        int index = report.events.FindIndex(x => x.t > e.t);
-        if (index < 0) report.events.Add(e);
-        else report.events.Insert(index, e);
+        if (report.scenes.Count == 0) return;
+        SceneEntry last = report.scenes[report.scenes.Count - 1];
+        last.seconds = Round(Now() - last.t);
     }
 
     // Lista uma vez, ao carregar a cena, os objetos de "observar" (ThoughtInteractable).
-    // Portas, interruptores e transições ficam de fora: são mecânica, não observação.
     // Inclui inativos porque algumas sequências ativam objetos depois.
-    private void RecordAvailableInteractables(Scene scene)
+    private void RecordObservables(Scene scene)
     {
-        SceneInteractables entry = report.availableInteractables.Find(s => s.scene == scene.name);
-        if (entry == null)
-        {
-            entry = new SceneInteractables { scene = scene.name };
-            report.availableInteractables.Add(entry);
-        }
-
         ThoughtInteractable[] found = FindObjectsByType<ThoughtInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (ThoughtInteractable ti in found)
         {
-            if (ti.gameObject.scene == scene && !entry.objects.Contains(ti.gameObject.name))
-                entry.objects.Add(ti.gameObject.name);
-        }
+            if (ti.gameObject.scene != scene || !ti.HasDialogue) continue;
+            string id = ti.ReportId;
+            if (report.observables.Exists(o => o.id == id)) continue; // cena revisitada ou objeto repetido
 
-        entry.objects.Sort(StringComparer.Ordinal);
+            report.observables.Add(new ObservableEntry
+            {
+                scene = scene.name,
+                id = id,
+                label = ti.ReportLabel,
+                theme = string.IsNullOrEmpty(ti.ReportTheme) ? "Outros" : ti.ReportTheme,
+            });
+        }
+    }
+
+    private void MarkObserved(string id)
+    {
+        ObservableEntry o = report.observables.Find(x => x.id == id);
+        if (o == null || o.order > 0) return;
+        o.order = ++observedCount;
+        o.t = Now();
     }
 
     // ---------- Gravação ----------
@@ -249,7 +343,7 @@ public class ReportLogger : MonoBehaviour
 
         report.partial = partial;
         report.endedAt = DateTime.UtcNow.ToString("o");
-        report.durationSeconds = Round(Time.realtimeSinceStartup - sessionStartTime);
+        report.durationSeconds = Round(Now());
 
         try
         {
@@ -263,10 +357,15 @@ public class ReportLogger : MonoBehaviour
         {
             // Nunca derrubar o jogo por causa do relatório
             Debug.LogWarning("[ReportLogger] Falha ao salvar relatório: " + e.Message);
+            return;
         }
+
+        // Envia a versão parcial também: o psicólogo vê a sessão mesmo se o jogo fechar no meio.
+        // Fechando o jogo não dá tempo: fica pra próxima vez que abrir.
+        if (!quitting) ReportUploader.UploadPending(this);
     }
 
-    // ---------- Texto legível ----------
+    // ---------- Texto legível (cópia local; o site mostra isso organizado) ----------
 
     private string BuildText()
     {
@@ -274,146 +373,51 @@ public class ReportLogger : MonoBehaviour
         sb.AppendLine("Relatório Five Stages (formato v" + report.formatVersion + ")");
         sb.AppendLine("Material complementar pensado para apoiar a conversa com o psicólogo. Não é um instrumento diagnóstico.");
         sb.AppendLine();
-        sb.AppendLine("Código do paciente: " + (string.IsNullOrEmpty(report.patientCode) ? "(não informado)" : report.patientCode));
-        sb.AppendLine("Sessão: " + report.sessionId);
-        sb.AppendLine("Início (UTC): " + report.startedAt);
-        sb.AppendLine("Fim (UTC): " + report.endedAt);
-        sb.AppendLine("Duração: " + FormatTime(report.durationSeconds));
-        sb.AppendLine("Situação: " + (report.partial ? "incompleta" : "completa"));
+        sb.AppendLine("Código do paciente: " + (string.IsNullOrEmpty(report.patientCode) ? "(sem código, teste no editor)" : report.patientCode));
+        sb.AppendLine("Duração: " + FormatTime(report.durationSeconds) + " · " + (report.partial ? "incompleta" : "completa"));
         sb.AppendLine();
 
-        AppendChoicesSummary(sb);
-        AppendExplorationSummary(sb);
-        AppendReadingSummary(sb);
-        AppendTimeline(sb);
+        sb.AppendLine("== Escolhas ==");
+        Dictionary<string, int> counts = new Dictionary<string, int>();
+        foreach (ChoiceEntry c in report.choices)
+        {
+            string stage = c.chosen >= 0 && c.chosen < c.options.Count ? c.options[c.chosen].stage : "";
+            counts.TryGetValue(stage, out int n);
+            counts[stage] = n + 1;
+        }
+        foreach (KeyValuePair<string, string> s in StageLabels)
+        {
+            counts.TryGetValue(s.Key, out int n);
+            sb.AppendLine("  " + s.Value + ": " + n);
+        }
+        sb.AppendLine();
+
+        sb.AppendLine("== Objetos observados ==");
+        foreach (ObservableEntry o in report.observables)
+        {
+            sb.AppendLine("  " + (o.order > 0 ? o.order + "º " : "-  ") + o.label + " [" + o.theme + "]" +
+                          (o.order > 0 ? " " + o.seconds.ToString("0.0") + "s" : " (não observou)"));
+        }
+        sb.AppendLine();
+
+        sb.AppendLine("== Linha do tempo ==");
+        List<KeyValuePair<float, string>> lines = new List<KeyValuePair<float, string>>();
+        foreach (SceneEntry s in report.scenes) lines.Add(new KeyValuePair<float, string>(s.t, "Entrou em " + s.label));
+        foreach (ChoiceEntry c in report.choices)
+        {
+            string text = c.chosen >= 0 && c.chosen < c.options.Count ? c.options[c.chosen].text : "?";
+            string stage = c.chosen >= 0 && c.chosen < c.options.Count ? StageLabel(c.options[c.chosen].stage) : "?";
+            lines.Add(new KeyValuePair<float, string>(c.t, "  " + c.dialogue + ": \"" + text + "\" → " + stage + " (" + c.seconds.ToString("0.0") + "s)"));
+        }
+        lines.Sort((a, b) => a.Key.CompareTo(b.Key));
+        foreach (KeyValuePair<float, string> l in lines) sb.AppendLine("[" + FormatTime(l.Key) + "] " + l.Value);
 
         return sb.ToString();
     }
 
-    private void AppendChoicesSummary(StringBuilder sb)
-    {
-        sb.AppendLine("== Escolhas nos diálogos ==");
+    // ---------- Utilitários ----------
 
-        List<ReportEvent> choices = report.events.FindAll(e => e.type == "choice");
-        if (choices.Count == 0)
-        {
-            sb.AppendLine("Nenhuma escolha registrada nesta sessão.");
-            sb.AppendLine();
-            return;
-        }
-
-        Dictionary<string, int> counts = new Dictionary<string, int>();
-        float totalTime = 0f;
-        foreach (ReportEvent c in choices)
-        {
-            counts.TryGetValue(c.stage, out int n);
-            counts[c.stage] = n + 1;
-            totalTime += c.seconds;
-        }
-
-        sb.AppendLine("Total de escolhas: " + choices.Count);
-        int max = 0;
-        foreach (KeyValuePair<string, string> s in StageLabels)
-        {
-            counts.TryGetValue(s.Key, out int n);
-            max = Mathf.Max(max, n);
-            sb.AppendLine("  " + s.Value + ": " + n + " (" + Mathf.RoundToInt(100f * n / choices.Count) + "%)");
-        }
-
-        List<string> top = new List<string>();
-        foreach (KeyValuePair<string, string> s in StageLabels)
-            if (counts.TryGetValue(s.Key, out int n) && n == max) top.Add(s.Value);
-
-        sb.AppendLine(top.Count == 1
-            ? "Tendência mais frequente: " + top[0] + " (" + max + " de " + choices.Count + ")"
-            : "Sem tendência única: empate entre " + string.Join(", ", top) + " (" + max + " cada)");
-        sb.AppendLine("Tempo médio para escolher: " + (totalTime / choices.Count).ToString("0.0") + "s");
-        sb.AppendLine();
-    }
-
-    private void AppendExplorationSummary(StringBuilder sb)
-    {
-        sb.AppendLine("== Exploração dos cenários ==");
-
-        bool any = false;
-        foreach (SceneInteractables s in report.availableInteractables)
-        {
-            if (s.objects.Count == 0) continue;
-            any = true;
-
-            int observed = 0;
-            foreach (string obj in s.objects)
-                if (report.events.Exists(e => e.type == "interact" && e.scene == s.scene && e.target == obj))
-                    observed++;
-
-            float ratio = (float)observed / s.objects.Count;
-            string level = ratio >= 0.7f ? "explorou bastante"
-                         : ratio >= 0.35f ? "explorou parte do cenário"
-                         : "explorou pouco";
-
-            sb.AppendLine(SceneLabel(s.scene) + ": observou " + observed + " de " + s.objects.Count +
-                          " objetos (" + Mathf.RoundToInt(ratio * 100f) + "%), " + level);
-        }
-
-        if (!any) sb.AppendLine("Nenhum cenário com objetos para observar.");
-        sb.AppendLine();
-    }
-
-    private void AppendReadingSummary(StringBuilder sb)
-    {
-        sb.AppendLine("== Leitura dos diálogos ==");
-
-        int dialogues = 0, lines = 0, skips = 0;
-        float seconds = 0f;
-        foreach (ReportEvent e in report.events)
-        {
-            if (e.type != "dialogue") continue;
-            dialogues++;
-            lines += e.lines;
-            skips += e.typingSkips;
-            seconds += e.seconds;
-        }
-
-        if (dialogues == 0)
-        {
-            sb.AppendLine("Nenhum diálogo registrado.");
-            sb.AppendLine();
-            return;
-        }
-
-        float skipRatio = lines > 0 ? (float)skips / lines : 0f;
-        string pace = skipRatio >= 0.7f ? "pulou a digitação na maioria das falas"
-                    : skipRatio >= 0.3f ? "pulou a digitação em parte das falas"
-                    : "deixou o texto aparecer por completo na maioria das falas";
-
-        sb.AppendLine(dialogues + " diálogos, " + lines + " falas, " + FormatTime(seconds) + " em diálogos no total.");
-        sb.AppendLine("Ritmo: " + pace + " (" + Mathf.RoundToInt(skipRatio * 100f) + "%).");
-        sb.AppendLine();
-    }
-
-    private void AppendTimeline(StringBuilder sb)
-    {
-        sb.AppendLine("== Linha do tempo ==");
-
-        foreach (ReportEvent e in report.events)
-        {
-            string time = "[" + FormatTime(e.t) + "] ";
-            switch (e.type)
-            {
-                case "sceneChange":
-                    sb.AppendLine(time + "Entrou em: " + SceneLabel(e.target));
-                    break;
-                case "dialogue":
-                    sb.AppendLine(time + "Diálogo: " + e.target + " (" + e.seconds.ToString("0.0") + "s, " + e.lines + " falas)");
-                    break;
-                case "choice":
-                    sb.AppendLine(time + "  Escolheu: \"" + e.choice + "\" → " + StageLabel(e.stage) +
-                                  " (pensou " + e.seconds.ToString("0.0") + "s)");
-                    break;
-                // interact não aparece: o diálogo do objeto já entra logo em seguida
-            }
-        }
-    }
+    private float Now(float secondsAgo = 0f) => Round(Mathf.Max(0f, Time.realtimeSinceStartup - sessionStartTime - secondsAgo));
 
     private static string SceneLabel(string scene) => SceneLabels.TryGetValue(scene, out string label) ? label : scene;
     private static string StageLabel(string stage) => StageLabels.TryGetValue(stage, out string label) ? label : stage;
