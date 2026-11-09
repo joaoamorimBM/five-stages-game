@@ -94,12 +94,12 @@ a primeira versão do método; você revisa. Atualize formatVersion para 2.
 **Objetivo:** um backend que recebe o relatório com segurança.
 
 **Passos**
-- [ ] Criar o projeto no Supabase (anotar URL e chaves; **a service role nunca vai pro jogo nem pro site**)
+- [x] Criar o projeto no Supabase (anotar URL e chaves; **a service role nunca vai pro jogo nem pro site**)
 - [x] Criar as tabelas `pacientes` e `sessoes` (modelo no `CLAUDE.md`), via SQL em `supabase/migrations/`
 - [x] Ligar **Row Level Security** nas duas e escrever as políticas (psicólogo só vê os próprios pacientes e suas sessões)
 - [x] Criar a Edge Function `submit-report`: valida o JSON, o `formatVersion`, o tamanho, confere o código do paciente e faz **upsert por `sessionId`**
-- [ ] Testar com `curl` (código válido, código inválido, corpo gigante, mesmo `sessionId` duas vezes)
-- [ ] Commit: `feat: backend Supabase (tabelas, RLS, submit-report)`
+- [x] Testar com `curl` (código inexistente, verificador errado, formato antigo, leitura sem login bloqueada). Falta: dois usuários (um não vê o outro)
+- [x] Commit: `feat: backend Supabase (tabelas, RLS, submit-report)`
 
 **Prompt**
 ```
@@ -129,7 +129,7 @@ Lembre: código anônimo, upsert por sessionId, nada de service role fora da fun
 - [x] Depois de enviar com sucesso, mover o arquivo para `Relatorios/Enviados`
 - [x] Se falhar (sem internet), o arquivo **fica** e é tentado de novo na próxima abertura do jogo e ao voltar ao menu
 - [x] URL das funções em `Assets/Resources/five_stages_config.json` (sem chave: as funções do jogo não pedem login)
-- [ ] Commit: `feat: código do paciente no menu e envio do relatório`
+- [x] Commit: `feat: tela de código, relatório v4 e envio automático no jogo`
 
 **Prompt**
 ```
@@ -156,12 +156,12 @@ fazer se o jogador fecha o jogo no meio do envio. Os passos no editor do Unity
 **Decisão (você escolhe):** Vite + React (mais comum no mercado) ou HTML/JS puro com `supabase-js` (menos peças pra aprender). Hospedagem gratuita na Vercel ou Netlify.
 
 **Passos**
-- [ ] Login do psicólogo (Supabase Auth)
-- [ ] Lista de pacientes e botão **gerar código** (8+ caracteres, único)
-- [ ] Lista de sessões por paciente (data, duração, completa/incompleta)
-- [ ] Página da sessão: **linha do tempo**, **tempo por cena**, tempo em diálogos e **observado x não observado** (usa o campo da Fase 2)
-- [ ] Publicar e testar com dois psicólogos de teste (um não pode ver o outro)
-- [ ] Commit: `feat: site do psicólogo`
+- [x] Login do psicólogo (Supabase Auth, link mágico)
+- [x] Lista de pacientes e botão **gerar código** (8 caracteres com dígito verificador, único)
+- [x] Lista de sessões por paciente (data, duração, completa/incompleta)
+- [x] Página da sessão: resumo, escolhas com as opções não escolhidas, **observado x não observado** por tema, **linha do tempo**
+- [ ] Publicar na Vercel e testar com dois psicólogos de teste (um não pode ver o outro)
+- [x] Commit: `feat: site do psicólogo`
 
 **Prompt**
 ```
@@ -181,9 +181,9 @@ A cada tela, me explique como o front-end conversa com o Supabase.
 
 ## Fase 6 — Privacidade, testes de ponta a ponta e demonstração
 
-- [ ] Texto do **termo de consentimento** (mostrado no jogo antes do código, ou entregue pelo psicólogo)
+- [x] Texto do **termo de consentimento** na tela de código do jogo (falta revisar com um psicólogo)
 - [ ] Revisão LGPD: só código anônimo, HTTPS, sem dado real em testes/logs, política de retenção
-- [ ] Teste completo: jogo limpo → código novo → jogar → relatório no site
+- [x] Teste completo: jogo limpo → código novo → jogar → relatório no site (09/11/2026)
 - [ ] Teste offline: jogar sem internet, depois reconectar
 - [ ] Teste de falha: fechar o jogo no meio (relatório `partial: true` aparece como "incompleta")
 - [ ] Roteiro de demonstração de 3 minutos pra banca
@@ -206,3 +206,5 @@ ainda. Depois vamos corrigir um por um e eu explico cada correção.
 - **Limpeza de assets:** só com uma ferramenta que entenda a busca de materiais **por nome** dos FBX. Foi tentada e quebrou o jogo, então fica por último.
 - Limpar as linhas residuais do `.gitattributes`.
 - Criar um `CLAUDE.md` mais curto dentro de `supabase/` e do site, se o projeto crescer.
+- [x] **Visual da caixa de diálogo** ("memória íntima": retrato de busto, Alegreya Sans, opções dentro da caixa).
+- Montar o projeto em outro computador: `GUIA-NOTEBOOK.md`.
