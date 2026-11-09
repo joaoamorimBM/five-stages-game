@@ -95,9 +95,9 @@ a primeira versão do método; você revisa. Atualize formatVersion para 2.
 
 **Passos**
 - [ ] Criar o projeto no Supabase (anotar URL e chaves; **a service role nunca vai pro jogo nem pro site**)
-- [ ] Criar as tabelas `pacientes` e `sessoes` (modelo no `CLAUDE.md`), via SQL em `supabase/migrations/`
-- [ ] Ligar **Row Level Security** nas duas e escrever as políticas (psicólogo só vê os próprios pacientes e suas sessões)
-- [ ] Criar a Edge Function `submit-report`: valida o JSON, o `formatVersion`, o tamanho, confere o código do paciente e faz **upsert por `sessionId`**
+- [x] Criar as tabelas `pacientes` e `sessoes` (modelo no `CLAUDE.md`), via SQL em `supabase/migrations/`
+- [x] Ligar **Row Level Security** nas duas e escrever as políticas (psicólogo só vê os próprios pacientes e suas sessões)
+- [x] Criar a Edge Function `submit-report`: valida o JSON, o `formatVersion`, o tamanho, confere o código do paciente e faz **upsert por `sessionId`**
 - [ ] Testar com `curl` (código válido, código inválido, corpo gigante, mesmo `sessionId` duas vezes)
 - [ ] Commit: `feat: backend Supabase (tabelas, RLS, submit-report)`
 

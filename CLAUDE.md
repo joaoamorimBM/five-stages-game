@@ -30,8 +30,11 @@ Jogo (Unity)  →  Supabase (banco + login + Edge Function)  ←  Site do psicó
 ```
 
 - O jogo **grava o relatório localmente** e só depois tenta enviar. Ele precisa funcionar **sem internet**.
-- O psicólogo cadastra pacientes no site; o site gera um **código anônimo** (sem nome nem dado pessoal). O paciente digita o código no menu do jogo.
-- O envio passa por uma **Edge Function** que valida o código. O jogo **nunca** carrega chave com permissão ampla de escrita.
+- O psicólogo cria o paciente no site, e o site gera um **código anônimo** `XXXX-XXXX` (Crockford base32, último caractere é dígito verificador; regra em `supabase/functions/_shared/codigo.ts`, que precisa ser igual no C# e no site). Nenhum nome ou dado pessoal. Um código por paciente; as sessões dele ficam agrupadas.
+- O jogo abre numa **tela de código** antes do menu (com o texto de consentimento e a opção "Jogar sem código", que não grava nada). Ela aparece de novo a cada volta ao menu, pra um computador de clínica não herdar o código do paciente anterior. Offline, o dígito verificador pega erro de digitação; online, o jogo confirma pela função `check-code`.
+- O apelido do paciente ("paciente das terças") fica **só no navegador do psicólogo** (localStorage), nunca no servidor.
+- O envio passa pela Edge Function `submit-report`, que valida o código. O jogo **não carrega chave nenhuma** (as funções têm `verify_jwt = false` e se protegem validando o corpo).
+- Visual do site: "caderno de sessão" (papel creme, Alegreya / Alegreya Sans / Courier Prime). Mockup: https://claude.ai/artifact/N5bbCW2zPhDPTyBVyiDV7x
 - Cada psicólogo só pode ver os próprios pacientes (Row Level Security no banco).
 - O site mostra: lista de pacientes, gerar código, lista de sessões e a página da sessão (linha do tempo, tempo por cena, **o que o paciente observou e o que deixou de observar**).
 
@@ -69,12 +72,12 @@ Regras do formato:
 - `sessionId` é **estável durante a sessão**. O logger salva várias vezes (a cada troca de cena e ao fechar), com `partial: true` até a sessão terminar. Portanto o envio deve ser **upsert por `sessionId`**, nunca insert duplicado.
 - Mudanças no formato exigem subir `formatVersion` e manter o site compatível com versões antigas.
 
-### Modelo de dados (intenção, ajustar ao implementar)
+### Modelo de dados (implementado em `supabase/migrations/`)
 
-- `pacientes`: `id`, `psicologo_id` (→ `auth.users`), `codigo` (único), `criado_em`.
-- `sessoes`: `id` (= `sessionId` do jogo), `paciente_id`, `iniciada_em`, `duracao_segundos`, `parcial`, `formato`, `relatorio` (jsonb), `recebido_em`.
-- RLS: o psicólogo lê/escreve só linhas ligadas aos próprios pacientes. A escrita em `sessoes` vem **somente** da Edge Function (service role), após validar o código, o tamanho do corpo e o `formatVersion`.
-- Códigos de paciente com **8 caracteres** ou mais (4 é fácil de adivinhar).
+- `pacientes`: `id`, `psicologo_id` (→ `auth.users`, default `auth.uid()`), `codigo` (único, `XXXX-XXXX`), `criado_em`.
+- `sessoes`: `id` (= `sessionId` do jogo), `paciente_id`, `iniciada_em`, `duracao_segundos`, `parcial`, `formato`, `relatorio` (jsonb, o JSON do jogo inteiro), `resumo` (jsonb `{escolhas, estagios}`, calculado pela função), `recebida_em`, `atualizada_em`. View `sessoes_resumo` (sem o `relatorio`) pra lista do site.
+- RLS: o psicólogo lê e apaga só o que é dele, e cria pacientes só pra si. Ninguém altera código nem sessão pelo site. A escrita em `sessoes` vem **somente** da `submit-report` (service role), depois de validar o código, o tamanho (512 KB) e o `formatVersion` (3 ou 4). Uma versão parcial atrasada não sobrescreve uma sessão completa.
+- Projeto do Supabase na região São Paulo. Passo a passo de deploy: `supabase/README.md`.
 
 ## Privacidade (LGPD)
 
@@ -119,4 +122,6 @@ Os dados são sobre saúde emocional, ou seja, **dado pessoal sensível**. Sempr
 - Diálogos com opções: `remedios`, `louca`, `Pensamento_Quadro_familia`, `Celular`, `TV`, `torradas`, `dialogoAntesFlashBack`, `dialogoPosFlashback`, `ConversaPadaria`, `DialogoGraceFinal`.
 - `NPCInteraction` (padaria) não é `ThoughtInteractable`: o diálogo dele entra no relatório, mas não conta na exploração.
 - Saída do logger (`ReportLogger.ReportsFolder`): no editor, `Relatorios/` na raiz do projeto (no `.gitignore`, nunca commitar); no build, `Application.persistentDataPath/Relatorios/`. Arquivos `sessao_<data>_<id>.json` e `.txt`. A fila de envio da Fase 4 deve ler dessa mesma propriedade.
+- **Back-end (Fase 3):** `supabase/` escrito na branch `feature/site-psicologo` (migração, `submit-report`, `check-code`, testes em Node). Ainda **não foi publicado** num projeto Supabase.
+- **Planejado:** formato **v4** no jogo, organizado pro site: `scenes`, `observables` (com `label` e `theme`, ex. "Memórias da Claire", "Autocuidado"), `choices` (com `prompt`, `speaker`, **todas as `options`** e o índice `chosen`) e `dialogues`. Isso exige um campo `theme` no `DialogueData`. Também falta: a tela de código no jogo, o `ReportUploader` e o site (`site/`, Vite + React + TS).
 - Próximos passos: ver `ROADMAP.md`.
