@@ -38,11 +38,26 @@ const v4 = {
   startedAt: new Date().toISOString(), durationSeconds: 10, partial: false,
   choices: [
     { options: [{ text: "a", stage: "Raiva" }, { text: "b", stage: "Aceitacao" }], chosen: 1 },
-    { options: [{ text: "a", stage: "Raiva" }], chosen: 5 },
   ],
 };
 const r4 = validarRelatorio(v4);
 ok(r4.ok && r4.dados.resumo.escolhas === 1 && r4.dados.resumo.estagios.Aceitacao === 1, "v4 conta a opção escolhida");
+
+for (const choice of [
+  null,
+  { options: [{ text: "a", stage: "Raiva" }], chosen: 5 },
+  { options: [{ text: "a", stage: "Raiva" }], chosen: 0.5 },
+  { options: [null], chosen: 0 },
+  { options: [{ text: "a", stage: "Inventado" }], chosen: 0 },
+  { options: [{ text: "a", stage: "Raiva" }], chosen: 0, seconds: -1 },
+]) {
+  ok(!validarRelatorio({ ...v4, choices: [choice] }).ok, "rejeita escolha malformada");
+}
+for (const campo of ["scenes", "observables", "dialogues", "events", "availableInteractables"]) {
+  ok(!validarRelatorio({ ...v4, [campo]: [null] }).ok, "rejeita item nulo em " + campo);
+}
+ok(!validarRelatorio({ ...v4, observables: [{ order: -1 }] }).ok, "rejeita ordem negativa");
+ok(validarRelatorio({ ...v4, choices: [], scenes: [], observables: [], dialogues: [] }).ok, "sess�o inicial vazia");
 
 const erro = (mudanca: object) => {
   const x = validarRelatorio({ ...v3, ...mudanca });

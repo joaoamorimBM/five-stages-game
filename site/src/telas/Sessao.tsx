@@ -7,10 +7,10 @@ import { fmtDataHora, fmtDataLonga, fmtDuracao, fmtRelogio, fmtSegundos } from "
 import { contarEstagios, explorar, FATOR_HESITACAO, frasesResumo, lerRelatorio, ritmoLeitura } from "../lib/relatorio";
 import { ESTAGIOS, type Paciente, type Sessao } from "../lib/tipos";
 
-export default function SessaoTela() {
+export default function SessaoTela({ conta }: { conta: string }) {
   const { id = "" } = useParams();
   const navegar = useNavigate();
-  const { apelido } = useApelidos();
+  const { apelido, importarLegados } = useApelidos(conta);
   const [sessao, setSessao] = useState<Sessao | null | undefined>(undefined);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [numero, setNumero] = useState(0);
@@ -23,6 +23,7 @@ export default function SessaoTela() {
       try {
         const [s, pacientes, todas] = await Promise.all([api.obterSessao(id), api.listarPacientes(), api.listarSessoes()]);
         if (!vivo) return;
+        importarLegados(pacientes.map((p) => p.codigo));
         setSessao(s);
         if (s) {
           setPaciente(pacientes.find((p) => p.id === s.paciente_id) ?? null);
@@ -63,7 +64,7 @@ export default function SessaoTela() {
 
   const registro = [
     ...leitura.cenas.map((c) => ({ t: c.inicio, texto: "Entrou em " + c.nome })),
-    ...leitura.observaveis.filter((o) => o.ordem > 0).map((o) => ({ t: o.t, texto: `Observou ${o.nome} (${fmtSegundos(o.segundos)})` })),
+    ...leitura.observaveis.filter((o) => o.ordem > 0).map((o) => ({ t: o.t, texto: `Interagiu com ${o.nome} (${fmtSegundos(o.segundos)})` })),
     ...leitura.escolhas.map((e) => ({ t: e.t, texto: `Escolheu “${e.opcoes[e.escolhida]?.texto ?? "?"}” · ${e.opcoes[e.escolhida]?.estagio?.nome ?? "sem estágio"}` })),
   ].sort((a, b) => a.t - b.t);
 
@@ -91,10 +92,10 @@ export default function SessaoTela() {
           <div className="meta">
             <span><strong>{fmtDuracao(duracao)}</strong> de jogo</span>
             {leitura.parcial
-              ? <span><strong style={{ color: "var(--alerta)" }}>Incompleta</strong>, o jogo foi fechado antes do fim</span>
+              ? <span><strong style={{ color: "var(--alerta)" }}>Parcial</strong>, registro recebido até o momento</span>
               : <span><strong style={{ color: "var(--ok)" }}>Completa</strong>, do início à dedicatória</span>}
             <span>Jogada em {fmtDataHora(sessao.iniciada_em)}</span>
-            <span>{total} {total === 1 ? "escolha" : "escolhas"} · {observados} {observados === 1 ? "objeto observado" : "objetos observados"}</span>
+            <span>{total} {total === 1 ? "escolha" : "escolhas"} · {observados} {observados === 1 ? "objeto com interação" : "objetos com interação"}</span>
           </div>
         </div>
 
@@ -115,7 +116,7 @@ export default function SessaoTela() {
         <section style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <div className="cabeca-secao">
             <h2 className="secao-titulo">Como respondeu</h2>
-            {total > 0 && <span className="pequeno">{total} {total === 1 ? "escolha" : "escolhas"} · tempo típico para decidir: {fmtSegundos(leitura.tempoTipico)}</span>}
+            {total > 0 && <span className="pequeno">{total} {total === 1 ? "escolha" : "escolhas"} · mediana dos tempos de resposta: {fmtSegundos(leitura.tempoTipico)}</span>}
           </div>
 
           <div className="estagios">
@@ -140,8 +141,8 @@ export default function SessaoTela() {
                     <div className="escolha-topo">
                       <span className="rotulo">{fmtRelogio(c.t)} · {c.cena} · {c.dialogo}</span>
                       <span className="escolha-tempo">
-                        pensou {fmtSegundos(c.segundos)}
-                        {c.hesitou && <span className="hesitou">hesitou</span>}
+                        respondeu em {fmtSegundos(c.segundos)}
+                        {c.hesitou && <span className="hesitou">tempo de resposta maior</span>}
                       </span>
                     </div>
                     {c.fala && (
@@ -174,16 +175,16 @@ export default function SessaoTela() {
             <aside className="margem">
               <p className="nota">As opções em cinza são as que apareceram e não foram escolhidas.</p>
               <p className="nota">
-                “Hesitou” marca as escolhas que levaram mais de {String(FATOR_HESITACAO).replace(".", ",")} vez o tempo típico dele nesta sessão, e não um tempo fixo igual para todos.
+                “Tempo de resposta maior” marca escolhas que levaram mais de {String(FATOR_HESITACAO).replace(".", ",")} vez a mediana desta sessão e pelo menos 1,5 segundo a mais. A marca só aparece a partir de três escolhas.
               </p>
               <p className="nota">Os estágios são tendências de resposta inspiradas em Kübler-Ross. Não indicam em que fase o paciente está.</p>
             </aside>
           </div>
         </section>
 
-        {/* 3. Para onde olhou */}
+        {/* 3. Objetos com que interagiu */}
         <section style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-          <h2 className="secao-titulo">Para onde olhou</h2>
+          <h2 className="secao-titulo">Objetos com que interagiu</h2>
           {exploracoes.length === 0 && <p className="vazio">Esta sessão não passou por cenas com objetos para observar.</p>}
           {exploracoes.map((ex) => {
             const foraAutocuidado = ex.temas.find((t) => t.nome === "Autocuidado");
@@ -191,7 +192,7 @@ export default function SessaoTela() {
               <div key={ex.cena} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 <div className="cabeca-secao">
                   <h3 style={{ fontSize: 24, fontWeight: 600 }}>{ex.cena}</h3>
-                  <span className="pequeno">observou {ex.vistos} de {ex.total} objetos · {ex.nivel}</span>
+                  <span className="pequeno">interagiu com {ex.vistos} de {ex.total} objetos · {ex.nivel}</span>
                 </div>
                 <div className="barra" aria-hidden="true"><div style={{ width: (ex.vistos / ex.total) * 100 + "%" }} /></div>
                 <div className="linha">
@@ -214,7 +215,7 @@ export default function SessaoTela() {
                               <li key={o.nome} className="objeto objeto-fora">
                                 <span className="ordem" aria-hidden="true">—</span>
                                 <span className="nome">{o.nome}</span>
-                                <span className="pequeno" style={{ fontSize: 14 }}>não observou</span>
+                                <span className="pequeno" style={{ fontSize: 14 }}>sem interação registrada</span>
                               </li>
                             ),
                           )}
@@ -225,10 +226,10 @@ export default function SessaoTela() {
                   <aside className="margem">
                     {foraAutocuidado && foraAutocuidado.total - foraAutocuidado.vistos > 0 && (
                       <p className="nota">
-                        Não se aproximou de {foraAutocuidado.total - foraAutocuidado.vistos} dos {foraAutocuidado.total} objetos ligados ao autocuidado.
+                        Não registrou interação com {foraAutocuidado.total - foraAutocuidado.vistos} dos {foraAutocuidado.total} objetos ligados ao autocuidado.
                       </p>
                     )}
-                    <p className="nota">O número antes do objeto é a ordem em que ele foi observado. O tempo é quanto durou o pensamento do Noah.</p>
+                    <p className="nota">O número antes do objeto é a ordem das primeiras interações registradas. O tempo é quanto durou o pensamento do Noah.</p>
                   </aside>
                 </div>
               </div>
@@ -269,16 +270,16 @@ export default function SessaoTela() {
                 <span>{fmtRelogio(duracao / 2)}</span>
                 <span>{fmtRelogio(duracao)}</span>
               </div>
-              <p className="pequeno">Cada ponto é uma escolha, na cor do estágio. Os pontos com anel são as hesitações.</p>
+              <p className="pequeno">Cada ponto é uma escolha, na cor do estágio. Os pontos com anel indicam tempos de resposta maiores.</p>
             </div>
           )}
 
           <details className="registro">
-            <summary>Ver registro completo</summary>
+            <summary>Ver registro da sessão</summary>
             <div className="registro-linhas">
               {ritmo.dialogos > 0 && (
                 <p className="apagado" style={{ marginBottom: 8 }}>
-                  Leitura: {ritmo.dialogos} diálogos, {ritmo.falas} falas. Pulou a digitação em {Math.round(ritmo.fracao * 100)}% das falas.
+                  Leitura: {ritmo.dialogos} diálogos, {ritmo.falas} falas. Acelerou a digitação em {Math.round(ritmo.fracao * 100)}% das falas.
                 </p>
               )}
               {registro.map((l, i) => (

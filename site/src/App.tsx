@@ -32,8 +32,8 @@ export default function App() {
       <Route path="/privacidade" element={<><Topo email={logado ? email : ""} /><Privacidade /></>} />
       {logado ? (
         <>
-          <Route path="/" element={<><Topo email={email} /><Pacientes /></>} />
-          <Route path="/sessao/:id" element={<><Topo email={email} /><SessaoTela /></>} />
+          <Route path="/" element={<><Topo email={email} /><Pacientes key={sessao?.user.id ?? "demo"} conta={sessao?.user.id ?? "demo"} /></>} />
+          <Route path="/sessao/:id" element={<><Topo email={email} /><SessaoTela key={sessao?.user.id ?? "demo"} conta={sessao?.user.id ?? "demo"} /></>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </>
       ) : (

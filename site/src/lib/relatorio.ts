@@ -169,12 +169,12 @@ const nome = (id: Estagio) => ESTAGIOS.find((e) => e.id === id)!.nome.toLowerCas
 
 export function frasesResumo(l: Leitura): string[] {
   const frases: string[] = [];
-  const total = l.escolhas.length;
+  const c = contarEstagios(l);
+  const total = Object.values(c).reduce((s, n) => s + n, 0);
 
   if (total === 0) {
-    frases.push("Nenhuma escolha foi registrada nesta sessão.");
+    frases.push("Nenhuma escolha com classificação reconhecida foi registrada nesta sessão.");
   } else {
-    const c = contarEstagios(l);
     const ordem = ESTAGIOS.map((e) => e.id).filter((id) => c[id] > 0).sort((a, b) => c[b] - c[a]);
     const max = c[ordem[0]];
     const topo = ordem.filter((id) => c[id] === max);
@@ -202,7 +202,7 @@ export function frasesResumo(l: Leitura): string[] {
 
   for (const ex of explorar(l)) {
     const prefixo = NA_CENA[ex.cena] ?? `Em ${ex.cena}`;
-    let f = `${prefixo}, observou ${ex.vistos} de ${ex.total} objetos`;
+    let f = `${prefixo}, interagiu com ${ex.vistos} de ${ex.total} objetos`;
     const cheios = ex.temas.filter((t) => t.total >= 2 && t.vistos === t.total).map((t) => `“${t.nome}”`);
     const vazios = ex.temas.filter((t) => t.total >= 3 && t.vistos / t.total <= 0.34);
     const partes: string[] = [];
@@ -219,7 +219,7 @@ export function frasesResumo(l: Leitura): string[] {
     );
   }
 
-  if (l.parcial) frases.push(`A sessão foi interrompida antes do fim, depois de ${fmtDuracao(l.duracao)}.`);
+  if (l.parcial) frases.push(`O registro é parcial e contém ${fmtDuracao(l.duracao)} de jogo.`);
 
   return frases;
 }

@@ -52,6 +52,9 @@ Deno.serve(async (req) => {
     resumo: d.resumo,
     atualizada_em: new Date().toISOString(),
   });
+  if (e3?.code === "23514" && e3.message.includes("sessao_de_outro_paciente")) {
+    return responder(409, { erro: "sessao_de_outro_paciente" });
+  }
   if (e3) return falha("gravar_sessao", e3);
 
   return responder(200, { ok: true });
