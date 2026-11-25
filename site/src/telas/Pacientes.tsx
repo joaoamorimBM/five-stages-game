@@ -9,20 +9,26 @@ import { ESTAGIOS, type Paciente, type SessaoResumo } from "../lib/tipos";
 
 // "Da 1ª para a 3ª sessão, as respostas de aceitação passaram de 0 para 2."
 function tendencia(sessoes: SessaoResumo[]): string {
-  if (sessoes.length < 2) return "";
-  const antiga = sessoes[sessoes.length - 1].resumo.estagios ?? {};
-  const nova = sessoes[0].resumo.estagios ?? {};
+  const completas = sessoes.filter((s) => !s.parcial && s.resumo.escolhas > 0)
+    .sort((a, b) => a.iniciada_em.localeCompare(b.iniciada_em));
+  if (completas.length < 2) return "";
+  const primeira = completas[0];
+  const ultima = completas[completas.length - 1];
+  if (primeira.formato !== ultima.formato || primeira.resumo.escolhas !== ultima.resumo.escolhas)
+    return "As sessões completas têm formatos ou quantidades de escolhas diferentes; a comparação das contagens não é exibida.";
+  const antiga = primeira.resumo.estagios ?? {};
+  const nova = ultima.resumo.estagios ?? {};
   let melhor = { nome: "", de: 0, para: 0, dif: 0 };
   for (const e of ESTAGIOS) {
     const de = antiga[e.id] ?? 0;
     const para = nova[e.id] ?? 0;
     if (Math.abs(para - de) > Math.abs(melhor.dif)) melhor = { nome: e.nome.toLowerCase(), de, para, dif: para - de };
   }
-  if (melhor.dif === 0) return `Da 1ª para a ${sessoes.length}ª sessão, a distribuição das respostas ficou parecida.`;
-  return `Da 1ª para a ${sessoes.length}ª sessão, as respostas de ${melhor.nome} passaram de ${melhor.de} para ${melhor.para}.`;
+  if (melhor.dif === 0) return `Entre a primeira e a última sessão completa, a distribuição das respostas ficou parecida.`;
+  return `Entre a primeira e a última sessão completa, as respostas de ${melhor.nome} passaram de ${melhor.de} para ${melhor.para}.`;
 }
 
-export default function Pacientes() {
+export default function Pacientes({ conta }: { conta: string }) {
   const [pacientes, setPacientes] = useState<Paciente[] | null>(null);
   const [sessoes, setSessoes] = useState<SessaoResumo[]>([]);
   const [erro, setErro] = useState("");
@@ -33,11 +39,12 @@ export default function Pacientes() {
   const [editando, setEditando] = useState<string | null>(null);
   const [rascunho, setRascunho] = useState("");
   const [apagando, setApagando] = useState<string | null>(null);
-  const { apelido, definir } = useApelidos();
+  const { apelido, definir, importarLegados } = useApelidos(conta);
 
   async function carregar() {
     try {
       const [p, s] = await Promise.all([api.listarPacientes(), api.listarSessoes()]);
+      importarLegados(p.map((paciente) => paciente.codigo));
       setPacientes(p);
       setSessoes(s);
       // Abre o primeiro paciente com sessões, pra tela não começar vazia
